@@ -3,7 +3,7 @@ import {
   ArrowLeft, RefreshCw, Download, Save, Palette, Type, 
   Image, Layers, Copy, Check, Eye, Grid, List, Sparkles,
   Monitor, Smartphone, Tablet, Zap, Heart, Star, Crown,
-  Settings, Edit, ChevronDown, ChevronUp, Filter
+  Settings, Edit, ChevronDown, ChevronUp, Filter, X
 } from 'lucide-react';
 import { MoodboardData } from '../types';
 import { FontSelector } from './FontSelector';
