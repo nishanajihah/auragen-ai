@@ -4,7 +4,12 @@ import { generateDesignSystem, regenerateSection } from './gemini';
 // Conversation history for context
 let conversationHistory: string[] = [];
 
-export const generateAuraResponse = async (message: string): Promise<AuraGenResponse> => {
+export const generateAuraResponse = async (
+  message: string, 
+  userId?: string, 
+  isPremium: boolean = false,
+  forceRefresh: boolean = false
+): Promise<AuraGenResponse> => {
   try {
     // Add user message to history
     conversationHistory.push(`User: ${message}`);
@@ -15,7 +20,13 @@ export const generateAuraResponse = async (message: string): Promise<AuraGenResp
     }
 
     // Generate response with Gemini AI
-    const response = await generateDesignSystem(message, conversationHistory);
+    const response = await generateDesignSystem(
+      message, 
+      conversationHistory, 
+      userId, 
+      isPremium, 
+      forceRefresh
+    );
     
     // Add AI response to history
     if (response.message) {
@@ -37,10 +48,12 @@ export const generateAuraResponse = async (message: string): Promise<AuraGenResp
 export const handleRegenerateSection = async (
   section: string,
   currentMoodboard: any,
-  userContext: string = ''
+  userContext: string = '',
+  userId?: string,
+  isPremium: boolean = false
 ): Promise<AuraGenResponse> => {
   try {
-    return await regenerateSection(section, currentMoodboard, userContext);
+    return await regenerateSection(section, currentMoodboard, userContext, userId, isPremium);
   } catch (error) {
     console.error('Error regenerating section:', error);
     
@@ -54,4 +67,13 @@ export const handleRegenerateSection = async (
 // Reset for new conversations
 export const resetConversation = () => {
   conversationHistory = [];
+};
+
+// Force refresh cache
+export const forceRefreshResponse = async (
+  message: string, 
+  userId?: string, 
+  isPremium: boolean = false
+): Promise<AuraGenResponse> => {
+  return generateAuraResponse(message, userId, isPremium, true);
 };

@@ -8,6 +8,7 @@ import { SaveProjectModal } from './components/SaveProjectModal';
 import { AuthModal } from './components/AuthModal';
 import { PremiumModal } from './components/PremiumModal';
 import { ExportModal } from './components/ExportModal';
+import { SettingsPage } from './components/SettingsPage';
 import { NotificationContainer } from './components/NotificationContainer';
 import { UsageIndicator } from './components/UsageIndicator';
 import { VoiceControls } from './components/VoiceControls';
@@ -24,10 +25,10 @@ import { analytics } from './services/analytics';
 import { notifications } from './services/notifications';
 import { checkFeatureAccess as checkFeatureAccessHelper } from './utils/helpers';
 import { VOICE_SETTINGS } from './utils/constants';
-import { getEnvironmentInfo } from './services/gemini';
+import { getEnvironmentInfo, getUsageStats } from './services/gemini';
 
 type ViewMode = 'conversation' | 'moodboard';
-type AppMode = 'landing' | 'pricing' | 'app' | 'error';
+type AppMode = 'landing' | 'pricing' | 'app' | 'settings' | 'error';
 
 function App() {
   const { user, loading: authLoading } = useAuth();
@@ -38,7 +39,7 @@ function App() {
   const [moodboard, setMoodboard] = useState<MoodboardData | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [viewMode, setViewMode] = useState<ViewMode>('conversation');
-  const [currentProject, setCurrentProject] = useState<string>('');
+  const [currentProject, setCurrentProject] = useState<string>('Nebula Bloom');
   const [isPremium, setIsPremium] = useState(false);
   
   // Modal states
@@ -60,6 +61,27 @@ function App() {
   // Voice settings
   const [voiceEnabled, setVoiceEnabled] = useState(true);
   const [currentVoice, setCurrentVoice] = useState(VOICE_SETTINGS.DEFAULT_VOICE_ID);
+
+  // Settings
+  const [userSettings, setUserSettings] = useState({
+    displayName: '',
+    notifications: {
+      email: true,
+      browser: true,
+      marketing: false
+    },
+    preferences: {
+      autoSave: true,
+      voiceResponses: true,
+      animationsEnabled: true,
+      compactMode: false
+    },
+    fonts: {
+      heading: 'Inter',
+      body: 'Inter',
+      size: 'medium'
+    }
+  });
 
   useEffect(() => {
     if (darkMode) {
@@ -90,6 +112,12 @@ function App() {
       analytics.setUserId(user.id);
       checkPremiumStatus().then(setIsPremium);
       
+      // Load user settings
+      const savedSettings = localStorage.getItem(`auragen-settings-${user.id}`);
+      if (savedSettings) {
+        setUserSettings(JSON.parse(savedSettings));
+      }
+      
       if (appMode === 'landing' || appMode === 'pricing') {
         console.log('Redirecting to app...');
         setAppMode('app');
@@ -97,7 +125,7 @@ function App() {
       }
     } else {
       console.log('User logged out');
-      if (appMode === 'app') {
+      if (appMode === 'app' || appMode === 'settings') {
         setAppMode('landing');
       }
     }
@@ -182,7 +210,7 @@ function App() {
     setIsLoading(true);
 
     try {
-      const response = await generateAuraResponse(content);
+      const response = await generateAuraResponse(content, user.id, isPremium);
       
       const aiMessage: Message = {
         id: (Date.now() + 1).toString(),
@@ -196,7 +224,7 @@ function App() {
       incrementUsage('generation', user.id);
       analytics.trackGeneration(content, true);
       
-      if (voiceEnabled) {
+      if (voiceEnabled && userSettings.preferences.voiceResponses) {
         await speakAuraResponse(response.message, currentVoice);
       }
       
@@ -204,6 +232,11 @@ function App() {
         setMoodboard(response.moodboard);
         notifications.generationSuccess();
         setTimeout(() => setViewMode('moodboard'), 1000);
+        
+        // Auto-save if enabled
+        if (userSettings.preferences.autoSave) {
+          // TODO: Implement auto-save
+        }
       }
     } catch (error) {
       console.error('Error generating response:', error);
@@ -226,7 +259,7 @@ function App() {
     setMessages([]);
     setMoodboard(null);
     setViewMode('conversation');
-    setCurrentProject('');
+    setCurrentProject('Nebula Bloom');
     resetConversation();
     analytics.trackFeatureUsage('new_conversation');
   };
@@ -254,7 +287,7 @@ function App() {
     
     setIsLoading(true);
     try {
-      const response = await handleRegenerateSection(section, moodboard, `Regenerate the ${section} section`);
+      const response = await handleRegenerateSection(section, moodboard, `Regenerate the ${section} section`, user.id, isPremium);
       if (response.moodboard) {
         setMoodboard(response.moodboard);
       }
@@ -262,7 +295,7 @@ function App() {
       incrementUsage('generation', user.id);
       analytics.trackFeatureUsage('regenerate_section', section);
       
-      if (voiceEnabled) {
+      if (voiceEnabled && userSettings.preferences.voiceResponses) {
         await speakAuraResponse(response.message, currentVoice);
       }
     } catch (error) {
@@ -363,7 +396,9 @@ function App() {
         'fonts',
         moodboard!,
         `Change the ${fontModalData?.fontType} font from "${request.currentFont}" because: ${request.reason}. 
-         User preferences: ${request.preferences.style} ${request.preferences.category} font with ${request.preferences.mood} mood.`
+         User preferences: ${request.preferences.style} ${request.preferences.category} font with ${request.preferences.mood} mood.`,
+        user?.id,
+        isPremium
       );
       if (response.moodboard) {
         setMoodboard(response.moodboard);
@@ -371,7 +406,7 @@ function App() {
       
       analytics.trackFeatureUsage('font_change', fontModalData?.fontType);
       
-      if (voiceEnabled) {
+      if (voiceEnabled && userSettings.preferences.voiceResponses) {
         await speakAuraResponse(response.message, currentVoice);
       }
     } catch (error) {
@@ -427,6 +462,18 @@ function App() {
     setIsPremium(true);
     analytics.trackPremiumUpgrade('monthly');
     notifications.success('Premium Activated!', 'You now have unlimited access to all features.');
+  };
+
+  const handleOpenSettings = () => {
+    setAppMode('settings');
+  };
+
+  const handleSaveSettings = (settings: any) => {
+    setUserSettings(settings);
+    if (user) {
+      localStorage.setItem(`auragen-settings-${user.id}`, JSON.stringify(settings));
+    }
+    notifications.success('Settings Saved', 'Your preferences have been updated.');
   };
 
   if (authLoading) {
@@ -522,6 +569,23 @@ function App() {
     );
   }
 
+  if (appMode === 'settings') {
+    return (
+      <>
+        <SettingsPage
+          user={user}
+          isPremium={isPremium}
+          onBack={() => setAppMode('app')}
+          onSave={handleSaveSettings}
+          darkMode={darkMode}
+          toggleDarkMode={toggleDarkMode}
+        />
+        
+        <NotificationContainer />
+      </>
+    );
+  }
+
   if (!user) {
     console.log('No user, redirecting to landing...');
     if (appMode === 'app') {
@@ -561,6 +625,10 @@ function App() {
           setAuthMode(mode);
           setShowAuthModal(true);
         }}
+        onOpenSettings={handleOpenSettings}
+        onOpenProjectManager={() => setShowProjectManager(true)}
+        currentProject={currentProject}
+        isPremium={isPremium}
         voiceControls={
           <VoiceControls
             isEnabled={voiceEnabled}
@@ -661,6 +729,7 @@ function App() {
 
       <PremiumModal
         isOpen={showPremiumModal}
+        
         onClose={() => setShowPremiumModal(false)}
         onSuccess={handlePremiumSuccess}
         feature={premiumContext.feature}

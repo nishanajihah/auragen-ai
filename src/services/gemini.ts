@@ -1,5 +1,7 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { AuraGenResponse, MoodboardData } from '../types';
+import { geminiCache } from './geminiCache';
+import { usageTracker } from './usageTracker';
 
 // Environment detection
 const isDevelopment = import.meta.env.VITE_APP_ENV === 'development' || import.meta.env.DEV;
@@ -138,8 +140,35 @@ IMPORTANT RULES:
 When a user asks for regeneration of specific sections, only modify that section while keeping the rest intact.`;
 
 // Generate design system with Gemini AI
-export const generateDesignSystem = async (userMessage: string, conversationHistory: string[] = []): Promise<AuraGenResponse> => {
+export const generateDesignSystem = async (
+  userMessage: string, 
+  conversationHistory: string[] = [],
+  userId?: string,
+  isPremium: boolean = false,
+  forceRefresh: boolean = false
+): Promise<AuraGenResponse> => {
   try {
+    // Check rate limits in production
+    if (isProduction && userId) {
+      const rateCheck = usageTracker.checkRateLimit(userId, 'generation', isPremium);
+      if (!rateCheck.allowed) {
+        const resetTime = rateCheck.resetTime ? new Date(rateCheck.resetTime).toLocaleTimeString() : 'later';
+        return {
+          message: `You've reached your ${rateCheck.reason?.replace('_', ' ')} limit. Please try again ${resetTime === 'later' ? 'later' : `at ${resetTime}`} or upgrade to Premium for unlimited access.`,
+          isComplete: false
+        };
+      }
+    }
+
+    // Check cache first (unless force refresh)
+    if (!forceRefresh) {
+      const cached = geminiCache.get(userMessage, conversationHistory);
+      if (cached) {
+        console.log('Returning cached response');
+        return cached;
+      }
+    }
+
     // Initialize Gemini if not already done
     if (!genAI) {
       genAI = initializeGemini();
@@ -178,6 +207,11 @@ export const generateDesignSystem = async (userMessage: string, conversationHist
       console.error('Failed to parse Gemini response:', parseError);
       console.error('Raw response:', text);
       
+      // Record failed usage
+      if (userId) {
+        usageTracker.recordUsage(userId, 'generation', false);
+      }
+      
       // Fallback response
       return {
         message: "I apologize, but I'm having trouble generating your design system right now. Please try again with a more specific request about the type of interface you'd like to create.",
@@ -204,14 +238,29 @@ export const generateDesignSystem = async (userMessage: string, conversationHist
       });
     }
 
-    return {
+    const finalResponse = {
       message: parsedResponse.message,
       moodboard: parsedResponse.moodboard,
       isComplete: parsedResponse.isComplete || !!parsedResponse.moodboard
     };
 
+    // Cache the response
+    geminiCache.set(userMessage, finalResponse, conversationHistory);
+
+    // Record successful usage
+    if (userId) {
+      usageTracker.recordUsage(userId, 'generation', true);
+    }
+
+    return finalResponse;
+
   } catch (error) {
     console.error('Gemini AI Error:', error);
+    
+    // Record failed usage
+    if (userId) {
+      usageTracker.recordUsage(userId, 'generation', false);
+    }
     
     // Return user-friendly error message
     return {
@@ -225,9 +274,23 @@ export const generateDesignSystem = async (userMessage: string, conversationHist
 export const regenerateSection = async (
   section: string, 
   currentMoodboard: MoodboardData,
-  userContext: string = ''
+  userContext: string = '',
+  userId?: string,
+  isPremium: boolean = false
 ): Promise<AuraGenResponse> => {
   try {
+    // Check rate limits in production
+    if (isProduction && userId) {
+      const rateCheck = usageTracker.checkRateLimit(userId, 'generation', isPremium);
+      if (!rateCheck.allowed) {
+        const resetTime = rateCheck.resetTime ? new Date(rateCheck.resetTime).toLocaleTimeString() : 'later';
+        return {
+          message: `You've reached your ${rateCheck.reason?.replace('_', ' ')} limit. Please try again ${resetTime === 'later' ? 'later' : `at ${resetTime}`} or upgrade to Premium for unlimited access.`,
+          isComplete: false
+        };
+      }
+    }
+
     if (!genAI) {
       genAI = initializeGemini();
     }
@@ -258,6 +321,11 @@ Please provide a complete JSON response with the updated ${section} section whil
     
     const parsedResponse = JSON.parse(jsonMatch[0]);
 
+    // Record successful usage
+    if (userId) {
+      usageTracker.recordUsage(userId, 'generation', true);
+    }
+
     return {
       message: parsedResponse.message || `I've regenerated the ${section} section with fresh ideas!`,
       moodboard: parsedResponse.moodboard,
@@ -266,6 +334,11 @@ Please provide a complete JSON response with the updated ${section} section whil
 
   } catch (error) {
     console.error('Regeneration Error:', error);
+    
+    // Record failed usage
+    if (userId) {
+      usageTracker.recordUsage(userId, 'generation', false);
+    }
     
     return {
       message: `I had trouble regenerating the ${section} section. Please try again or be more specific about what you'd like to change.`,
@@ -319,6 +392,17 @@ export const getEnvironmentInfo = () => {
     environment: isDevelopment ? 'development' : 'production',
     model: getGeminiModel(),
     hasApiKey: !!getGeminiApiKey(),
-    branch: isDevelopment ? 'dev' : 'main'
+    branch: isDevelopment ? 'dev' : 'main',
+    cacheStats: geminiCache.getStats()
   };
+};
+
+// Clear cache manually
+export const clearCache = () => {
+  geminiCache.clear();
+};
+
+// Get usage statistics
+export const getUsageStats = (userId: string, isPremium: boolean = false) => {
+  return usageTracker.getUsageStats(userId, isPremium);
 };
