@@ -51,6 +51,10 @@ export default {
         'float': 'float 6s ease-in-out infinite',
         'glow': 'glow 2s ease-in-out infinite alternate',
         'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+        'in': 'fadeIn 0.3s ease-out',
+        'out': 'fadeOut 0.2s ease-in forwards',
+        'slide-in-right': 'slideInRight 0.3s ease-out',
+        'slide-out-right': 'slideOutRight 0.2s ease-in forwards',
       },
       keyframes: {
         float: {
@@ -61,9 +65,46 @@ export default {
           'from': { boxShadow: '0 0 20px -10px rgba(234, 179, 8, 0.5)' },
           'to': { boxShadow: '0 0 20px -10px rgba(234, 179, 8, 0.8)' },
         },
+        fadeIn: {
+          '0%': { opacity: '0' },
+          '100%': { opacity: '1' },
+        },
+        fadeOut: {
+          '0%': { opacity: '1' },
+          '100%': { opacity: '0' },
+        },
+        slideInRight: {
+          '0%': { transform: 'translateX(100%)', opacity: '0' },
+          '100%': { transform: 'translateX(0)', opacity: '1' },
+        },
+        slideOutRight: {
+          '0%': { transform: 'translateX(0)', opacity: '1' },
+          '100%': { transform: 'translateX(100%)', opacity: '0' },
+        },
       },
       backdropBlur: {
         xs: '2px',
+      },
+      borderWidth: {
+        '3': '3px',
+      },
+      boxShadow: {
+        '3xl': '0 35px 60px -15px rgba(0, 0, 0, 0.3)',
+      },
+      transitionDuration: {
+        '2000': '2000ms',
+      },
+      screens: {
+        'xs': '480px',
+      },
+      spacing: {
+        '18': '4.5rem',
+        '72': '18rem',
+        '84': '21rem',
+        '96': '24rem',
+      },
+      borderRadius: {
+        '4xl': '2rem',
       },
     },
   },

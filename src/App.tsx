@@ -6,7 +6,6 @@ import { ProjectManager } from './components/ProjectManager';
 import { FontSelectionModal } from './components/FontSelectionModal';
 import { SaveProjectModal } from './components/SaveProjectModal';
 import { AuthModal } from './components/AuthModal';
-import { EnhancedPremiumModal } from './components/EnhancedPremiumModal';
 import { ExportModal } from './components/ExportModal';
 import { SettingsPage } from './components/SettingsPage';
 import { VoiceControls } from './components/VoiceControls';
@@ -17,18 +16,19 @@ import { ProjectIndicator } from './components/ProjectIndicator';
 import { MobileNavigation } from './components/MobileNavigation';
 import { GoogleFontsProvider } from './components/GoogleFontsProvider';
 import { RevenueCatProvider, useRevenueCat } from './components/RevenueCatProvider';
+import { UsageDashboard } from './components/UsageDashboard';
 import { Message, MoodboardData, ProjectData, FontSelectionRequest } from './types';
 import { generateAuraResponse, handleRegenerateSection, resetConversation } from './services/mockApi';
 import { speakAuraResponse } from './services/elevenlabs';
 import { useAuth } from './hooks/useAuth';
 import { analytics } from './services/analytics';
 import { notifications } from './services/notifications';
-import { checkFeatureAccess, incrementUsage } from './utils/helpers';
+import { getUserPlanLimits, checkUsageLimit, getGeminiModel, canUseVoice } from './utils/planRestrictions';
 import { VOICE_SETTINGS } from './utils/constants';
 import { getEnvironmentInfo } from './services/gemini';
 
 type ViewMode = 'conversation' | 'moodboard';
-type AppMode = 'landing' | 'pricing' | 'app' | 'settings' | 'error';
+type AppMode = 'landing' | 'pricing' | 'app' | 'settings' | 'usage' | 'error';
 
 function AppContent() {
   const { user, loading: authLoading } = useAuth();
@@ -50,12 +50,10 @@ function AppContent() {
   const [showSaveModal, setShowSaveModal] = useState(false);
   const [showFontModal, setShowFontModal] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
-  const [showPremiumModal, setShowPremiumModal] = useState(false);
   const [showExportModal, setShowExportModal] = useState(false);
   
   // Modal data
   const [authMode, setAuthMode] = useState<'signin' | 'signup'>('signin');
-  const [premiumContext, setPremiumContext] = useState<{feature?: string, limit?: number}>({});
   const [fontModalData, setFontModalData] = useState<{
     currentFont: string;
     fontType: 'heading' | 'body';
@@ -136,17 +134,11 @@ function AppContent() {
       }
     } else {
       console.log('User logged out');
-      if (appMode === 'app' || appMode === 'settings') {
+      if (appMode === 'app' || appMode === 'settings' || appMode === 'usage') {
         setAppMode('landing');
       }
     }
   }, [user, appMode, initializeRevenueCat]);
-
-  useEffect(() => {
-    const handleShowPremiumModal = () => setShowPremiumModal(true);
-    window.addEventListener('show-premium-modal', handleShowPremiumModal);
-    return () => window.removeEventListener('show-premium-modal', handleShowPremiumModal);
-  }, []);
 
   const toggleDarkMode = () => {
     setDarkMode(!darkMode);
@@ -182,7 +174,8 @@ function AppContent() {
         setShowAuthModal(true);
       }
     } else {
-      setShowPremiumModal(true);
+      // Navigate to pricing page instead of showing modal
+      setAppMode('pricing');
     }
   };
 
@@ -199,14 +192,17 @@ function AppContent() {
       return;
     }
 
-    const accessCheck = checkFeatureAccess('generation', isPremium, user.id);
-    if (!accessCheck.allowed) {
-      setPremiumContext({ 
-        feature: 'generation', 
-        limit: accessCheck.limit 
-      });
-      setShowPremiumModal(true);
-      notifications.warning('Usage Limit Reached', `You've reached your daily limit of ${accessCheck.limit} generations. Upgrade to Premium for unlimited access.`);
+    // Check usage limits based on plan
+    const planLimits = getUserPlanLimits(user);
+    const mockUsageData = { generations: 3 }; // In real app, get from API
+    const usageCheck = checkUsageLimit('generations', mockUsageData.generations, user);
+    
+    if (!usageCheck.allowed) {
+      notifications.warning(
+        'Usage Limit Reached', 
+        `You've reached your daily limit of ${usageCheck.limit} generations. Upgrade to Premium for unlimited access.`
+      );
+      setAppMode('pricing');
       return;
     }
 
@@ -221,6 +217,8 @@ function AppContent() {
     setIsLoading(true);
 
     try {
+      // Use appropriate Gemini model based on plan
+      const model = getGeminiModel(user);
       const response = await generateAuraResponse(content, user.id, isPremium);
       
       const aiMessage: Message = {
@@ -232,10 +230,10 @@ function AppContent() {
 
       setMessages(prev => [...prev, aiMessage]);
       
-      incrementUsage('generation', user.id);
       analytics.trackGeneration(content, true);
       
-      if (voiceEnabled && userSettings.preferences.voiceResponses) {
+      // Check if voice is enabled for user's plan
+      if (voiceEnabled && userSettings.preferences.voiceResponses && canUseVoice(user)) {
         await speakAuraResponse(response.message, currentVoice);
       }
       
@@ -283,14 +281,17 @@ function AppContent() {
       return;
     }
 
-    const accessCheck = checkFeatureAccess('generation', isPremium, user.id);
-    if (!accessCheck.allowed) {
-      setPremiumContext({ 
-        feature: 'generation', 
-        limit: accessCheck.limit 
-      });
-      setShowPremiumModal(true);
-      notifications.warning('Usage Limit Reached', `You've reached your daily limit of ${accessCheck.limit} generations. Upgrade to Premium for unlimited access.`);
+    // Check usage limits based on plan
+    const planLimits = getUserPlanLimits(user);
+    const mockUsageData = { generations: 3 }; // In real app, get from API
+    const usageCheck = checkUsageLimit('generations', mockUsageData.generations, user);
+    
+    if (!usageCheck.allowed) {
+      notifications.warning(
+        'Usage Limit Reached', 
+        `You've reached your daily limit of ${usageCheck.limit} generations. Upgrade to Premium for unlimited access.`
+      );
+      setAppMode('pricing');
       return;
     }
 
@@ -303,10 +304,9 @@ function AppContent() {
         setMoodboard(response.moodboard);
       }
       
-      incrementUsage('generation', user.id);
       analytics.trackFeatureUsage('regenerate_section', section);
       
-      if (voiceEnabled && userSettings.preferences.voiceResponses) {
+      if (voiceEnabled && userSettings.preferences.voiceResponses && canUseVoice(user)) {
         await speakAuraResponse(response.message, currentVoice);
       }
     } catch (error) {
@@ -330,14 +330,17 @@ function AppContent() {
       return;
     }
 
-    const accessCheck = checkFeatureAccess('project', isPremium, user.id);
-    if (!accessCheck.allowed) {
-      setPremiumContext({ 
-        feature: 'project', 
-        limit: accessCheck.limit 
-      });
-      setShowPremiumModal(true);
-      notifications.warning('Project Limit Reached', `You've reached your limit of ${accessCheck.limit} saved projects. Upgrade to Premium for unlimited projects.`);
+    // Check usage limits based on plan
+    const planLimits = getUserPlanLimits(user);
+    const mockUsageData = { projects: 1 }; // In real app, get from API
+    const usageCheck = checkUsageLimit('projects', mockUsageData.projects, user);
+    
+    if (!usageCheck.allowed) {
+      notifications.warning(
+        'Project Limit Reached', 
+        `You've reached your limit of ${usageCheck.limit} saved projects. Upgrade to Premium for unlimited projects.`
+      );
+      setAppMode('pricing');
       return;
     }
 
@@ -359,7 +362,6 @@ function AppContent() {
     savedProjects.push(project);
     localStorage.setItem('auragen-projects', JSON.stringify(savedProjects));
     
-    incrementUsage('project', user.id);
     analytics.trackProjectSave(projectData.name, projectData.tags);
     
     setCurrentProject(projectData.name);
@@ -417,7 +419,7 @@ function AppContent() {
       
       analytics.trackFeatureUsage('font_change', fontModalData?.fontType);
       
-      if (voiceEnabled && userSettings.preferences.voiceResponses) {
+      if (voiceEnabled && userSettings.preferences.voiceResponses && canUseVoice(user)) {
         await speakAuraResponse(response.message, currentVoice);
       }
     } catch (error) {
@@ -439,14 +441,17 @@ function AppContent() {
       return;
     }
 
-    const accessCheck = checkFeatureAccess('export', isPremium, user.id);
-    if (!accessCheck.allowed) {
-      setPremiumContext({ 
-        feature: 'export', 
-        limit: accessCheck.limit 
-      });
-      setShowPremiumModal(true);
-      notifications.warning('Export Limit Reached', `You've reached your daily limit of ${accessCheck.limit} exports. Upgrade to Premium for unlimited exports.`);
+    // Check usage limits based on plan
+    const planLimits = getUserPlanLimits(user);
+    const mockUsageData = { exports: 1 }; // In real app, get from API
+    const usageCheck = checkUsageLimit('exports', mockUsageData.exports, user);
+    
+    if (!usageCheck.allowed) {
+      notifications.warning(
+        'Export Limit Reached', 
+        `You've reached your daily limit of ${usageCheck.limit} exports. Upgrade to Premium for unlimited exports.`
+      );
+      setAppMode('pricing');
       return;
     }
 
@@ -454,7 +459,7 @@ function AppContent() {
   };
 
   const handleExportComplete = () => {
-    incrementUsage('export', user.id);
+    analytics.trackFeatureUsage('export_completed');
   };
 
   const handleAuthSuccess = (userData: any) => {
@@ -478,6 +483,10 @@ function AppContent() {
     setAppMode('settings');
   };
 
+  const handleOpenUsageDashboard = () => {
+    setAppMode('usage');
+  };
+
   const handleSaveSettings = (settings: any) => {
     setUserSettings(settings);
     if (user) {
@@ -490,8 +499,8 @@ function AppContent() {
     return (
       <div className="min-h-screen welcome-gradient flex items-center justify-center">
         <div className="text-center">
-          <div className="w-16 h-16 border-4 border-primary-500/30 border-t-primary-500 rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-dark-600">Loading AuraGen AI...</p>
+          <div className="w-12 h-12 sm:w-16 sm:h-16 border-4 border-primary-500/30 border-t-primary-500 rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-dark-600 text-sm sm:text-base">Loading AuraGen AI...</p>
         </div>
       </div>
     );
@@ -563,14 +572,6 @@ function AppContent() {
           onSuccess={handleAuthSuccess}
           mode={authMode}
         />
-        
-        <EnhancedPremiumModal
-          isOpen={showPremiumModal}
-          onClose={() => setShowPremiumModal(false)}
-          onSuccess={handlePremiumSuccess}
-          feature={premiumContext.feature}
-          limit={premiumContext.limit}
-        />
       </>
     );
   }
@@ -592,6 +593,42 @@ function AppContent() {
           darkMode={darkMode}
           toggleDarkMode={toggleDarkMode}
         />
+      </Layout>
+    );
+  }
+
+  if (appMode === 'usage') {
+    return (
+      <Layout
+        darkMode={darkMode}
+        toggleDarkMode={toggleDarkMode}
+        user={user}
+        isPremium={isPremium}
+        showHeader={true}
+        onOpenSettings={handleOpenSettings}
+        onAuthClick={(mode) => {
+          setAuthMode(mode);
+          setShowAuthModal(true);
+        }}
+      >
+        <div className="py-8">
+          <ResponsiveContainer>
+            <div className="flex items-center space-x-3 mb-6">
+              <button
+                onClick={() => setAppMode('app')}
+                className="p-2 rounded-lg hover:bg-dark-200/50 transition-colors border border-dark-300/30"
+              >
+                <ArrowLeft className="w-5 h-5 text-dark-600" />
+              </button>
+              <h1 className="text-2xl font-bold text-dark-900">Usage Dashboard</h1>
+            </div>
+            
+            <UsageDashboard 
+              user={user} 
+              onUpgradeClick={() => setAppMode('pricing')} 
+            />
+          </ResponsiveContainer>
+        </div>
       </Layout>
     );
   }
@@ -635,6 +672,7 @@ function AppContent() {
       onOpenSettings={handleOpenSettings}
       onOpenProjectManager={() => setShowProjectManager(true)}
       isPremium={isPremium}
+      onShowUsageDashboard={handleOpenUsageDashboard}
       voiceControls={
         <VoiceControls
           isEnabled={voiceEnabled}
@@ -644,10 +682,10 @@ function AppContent() {
         />
       }
     >
-      <div className="py-8">
+      <div className="py-4 sm:py-6">
         {/* Project Indicator - Mobile Responsive */}
         {moodboard && (
-          <div className="mb-6">
+          <div className="mb-4 sm:mb-6">
             <ProjectIndicator
               projectName={currentProject || 'Untitled Project'}
               vibeSummary={moodboard.vibeSummary}
@@ -693,7 +731,7 @@ function AppContent() {
         />
 
         {/* Footer */}
-        <footer className={`text-center py-8 text-sm mt-16 ${darkMode ? 'text-dark-500' : 'text-gray-500'}`}>
+        <footer className={`text-center py-6 text-xs sm:text-sm mt-12 ${darkMode ? 'text-dark-500' : 'text-gray-500'}`}>
           <p>
             AuraGen AI - Transform your design vision into reality •{' '}
             <button 
@@ -735,14 +773,6 @@ function AppContent() {
         onClose={() => setShowAuthModal(false)}
         onSuccess={handleAuthSuccess}
         mode={authMode}
-      />
-
-      <EnhancedPremiumModal
-        isOpen={showPremiumModal}
-        onClose={() => setShowPremiumModal(false)}
-        onSuccess={handlePremiumSuccess}
-        feature={premiumContext.feature}
-        limit={premiumContext.limit}
       />
 
       <ExportModal
