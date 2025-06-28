@@ -6,7 +6,8 @@ import {
   Settings, Edit, ChevronDown, ChevronUp, Filter, X
 } from 'lucide-react';
 import { MoodboardData } from '../types';
-import { FontSelector } from './FontSelector';
+import { EnhancedFontSelector } from './EnhancedFontSelector';
+import { ResponsiveContainer } from './ResponsiveContainer';
 
 interface MoodboardViewProps {
   moodboard: MoodboardData | null;
@@ -67,7 +68,7 @@ export const MoodboardView: React.FC<MoodboardViewProps> = ({
 
   if (!moodboard) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <ResponsiveContainer className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <Palette className="w-16 h-16 text-primary-500 mx-auto mb-4" />
           <h2 className="text-2xl font-bold text-dark-900 mb-2">No Design System Yet</h2>
@@ -80,15 +81,37 @@ export const MoodboardView: React.FC<MoodboardViewProps> = ({
             Back to Chat
           </button>
         </div>
-      </div>
+      </ResponsiveContainer>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-dark-50 via-dark-100 to-dark-200">
-      {/* Header */}
-      <div className="bg-dark-100/80 backdrop-blur-2xl border-b border-dark-200/30 sticky top-16 z-30">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen">
+      {/* Mobile Header */}
+      <div className="sm:hidden bg-dark-100/80 backdrop-blur-2xl border-b border-dark-200/30 sticky top-16 z-30 p-4">
+        <div className="flex items-center justify-between">
+          <button
+            onClick={onBackToChat}
+            className="p-2 rounded-xl hover:bg-dark-200/50 transition-colors border border-dark-300/30"
+          >
+            <ArrowLeft className="w-5 h-5 text-dark-600" />
+          </button>
+          <div className="text-center flex-1 mx-4">
+            <h1 className="text-lg font-bold text-dark-900 truncate">{projectName}</h1>
+            <p className="text-sm text-dark-600 truncate">{moodboard.vibeSummary}</p>
+          </div>
+          <button
+            onClick={onExport}
+            className="p-2 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 transition-colors border border-emerald-500/30"
+          >
+            <Download className="w-5 h-5" />
+          </button>
+        </div>
+      </div>
+
+      {/* Desktop Header */}
+      <div className="hidden sm:block bg-dark-100/80 backdrop-blur-2xl border-b border-dark-200/30 sticky top-16 z-30">
+        <ResponsiveContainer>
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center space-x-4">
               <button
@@ -130,7 +153,7 @@ export const MoodboardView: React.FC<MoodboardViewProps> = ({
                 className="flex items-center space-x-2 px-4 py-2 bg-purple-500/10 hover:bg-purple-500/20 text-purple-600 rounded-xl transition-all border border-purple-500/30"
               >
                 <Save className="w-4 h-4" />
-                <span className="hidden sm:inline">Projects</span>
+                <span className="hidden lg:inline">Projects</span>
               </button>
 
               <button
@@ -138,44 +161,44 @@ export const MoodboardView: React.FC<MoodboardViewProps> = ({
                 className="flex items-center space-x-2 px-4 py-2 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 rounded-xl transition-all border border-emerald-500/30"
               >
                 <Download className="w-4 h-4" />
-                <span className="hidden sm:inline">Export</span>
+                <span className="hidden lg:inline">Export</span>
               </button>
             </div>
           </div>
-        </div>
+        </ResponsiveContainer>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <ResponsiveContainer className="py-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
           
           {/* Main Content */}
-          <div className="lg:col-span-2 space-y-8">
+          <div className="lg:col-span-2 space-y-6 lg:space-y-8">
             
             {/* Color Palettes Section */}
-            <div className="bg-dark-200/40 backdrop-blur-xl rounded-3xl border border-dark-300/30 overflow-hidden">
-              <div className="p-6 border-b border-dark-300/30">
+            <div className="bg-dark-200/40 backdrop-blur-xl rounded-2xl lg:rounded-3xl border border-dark-300/30 overflow-hidden">
+              <div className="p-4 lg:p-6 border-b border-dark-300/30">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-3">
                     <button
                       onClick={() => toggleSection('colors')}
                       className="flex items-center space-x-3"
                     >
-                      <Palette className="w-6 h-6 text-primary-500" />
-                      <h2 className="text-2xl font-bold text-dark-900">Color Palettes</h2>
+                      <Palette className="w-5 lg:w-6 h-5 lg:h-6 text-primary-500" />
+                      <h2 className="text-xl lg:text-2xl font-bold text-dark-900">Color Palettes</h2>
                       {expandedSections.has('colors') ? 
                         <ChevronUp className="w-5 h-5 text-dark-600" /> : 
                         <ChevronDown className="w-5 h-5 text-dark-600" />
                       }
                     </button>
                   </div>
-                  <div className="flex items-center space-x-3">
+                  <div className="flex items-center space-x-2 lg:space-x-3">
                     {/* Color Format Toggle */}
                     <div className="flex items-center bg-dark-100/50 rounded-lg p-1">
                       {['hex', 'rgb', 'hsl'].map((format) => (
                         <button
                           key={format}
                           onClick={() => setSelectedColorFormat(format as any)}
-                          className={`px-3 py-1 rounded-md text-xs font-medium transition-all ${
+                          className={`px-2 lg:px-3 py-1 rounded-md text-xs font-medium transition-all ${
                             selectedColorFormat === format
                               ? 'bg-primary-500 text-white'
                               : 'text-dark-600 hover:text-dark-800'
@@ -197,33 +220,33 @@ export const MoodboardView: React.FC<MoodboardViewProps> = ({
               </div>
 
               {expandedSections.has('colors') && (
-                <div className="p-6">
-                  <div className="space-y-8">
+                <div className="p-4 lg:p-6">
+                  <div className="space-y-6 lg:space-y-8">
                     {moodboard.colorPalettes.map((palette, paletteIndex) => (
                       <div key={paletteIndex}>
                         <div className="mb-4">
                           <h3 className="text-lg font-bold text-dark-900 mb-1">{palette.name}</h3>
                           <p className="text-dark-600 text-sm">{palette.purpose}</p>
                         </div>
-                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+                        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 lg:gap-4">
                           {palette.colors.map((color, colorIndex) => (
                             <div key={colorIndex} className="group">
                               <div 
-                                className="w-full h-24 rounded-xl cursor-pointer transition-all duration-300 hover:scale-105 hover:shadow-xl border-4 border-dark-200 shadow-lg hover:rotate-1"
+                                className="w-full h-20 lg:h-24 rounded-xl cursor-pointer transition-all duration-300 hover:scale-105 hover:shadow-xl border-4 border-dark-200 shadow-lg hover:rotate-1"
                                 style={{ backgroundColor: color.hex }}
                                 onClick={() => copyToClipboard(getColorValue(color), color.name)}
                               />
                               <div className="mt-3 text-center">
-                                <p className="text-sm font-semibold text-dark-900 mb-1">{color.name}</p>
+                                <p className="text-sm font-semibold text-dark-900 mb-1 truncate">{color.name}</p>
                                 <button
                                   onClick={() => copyToClipboard(getColorValue(color), color.name)}
                                   className="flex items-center space-x-1 mx-auto text-xs text-dark-500 hover:text-primary-500 transition-colors group-hover:text-primary-500"
                                 >
-                                  <span className="font-mono">{getColorValue(color)}</span>
+                                  <span className="font-mono truncate">{getColorValue(color)}</span>
                                   {copiedColor === color.name ? (
-                                    <Check className="w-3 h-3 text-green-500" />
+                                    <Check className="w-3 h-3 text-green-500 flex-shrink-0" />
                                   ) : (
-                                    <Copy className="w-3 h-3" />
+                                    <Copy className="w-3 h-3 flex-shrink-0" />
                                   )}
                                 </button>
                                 <p className="text-xs text-dark-500 mt-1 line-clamp-2">{color.description}</p>
@@ -239,15 +262,15 @@ export const MoodboardView: React.FC<MoodboardViewProps> = ({
             </div>
 
             {/* Typography Section */}
-            <div className="bg-dark-200/40 backdrop-blur-xl rounded-3xl border border-dark-300/30 overflow-hidden">
-              <div className="p-6 border-b border-dark-300/30">
+            <div className="bg-dark-200/40 backdrop-blur-xl rounded-2xl lg:rounded-3xl border border-dark-300/30 overflow-hidden">
+              <div className="p-4 lg:p-6 border-b border-dark-300/30">
                 <div className="flex items-center justify-between">
                   <button
                     onClick={() => toggleSection('typography')}
                     className="flex items-center space-x-3"
                   >
-                    <Type className="w-6 h-6 text-primary-500" />
-                    <h2 className="text-2xl font-bold text-dark-900">Typography</h2>
+                    <Type className="w-5 lg:w-6 h-5 lg:h-6 text-primary-500" />
+                    <h2 className="text-xl lg:text-2xl font-bold text-dark-900">Typography</h2>
                     {expandedSections.has('typography') ? 
                       <ChevronUp className="w-5 h-5 text-dark-600" /> : 
                       <ChevronDown className="w-5 h-5 text-dark-600" />
@@ -264,10 +287,10 @@ export const MoodboardView: React.FC<MoodboardViewProps> = ({
               </div>
 
               {expandedSections.has('typography') && (
-                <div className="p-6">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div className="p-4 lg:p-6">
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
                     {/* Heading Font */}
-                    <div className="bg-dark-100/50 rounded-2xl p-6 border border-dark-300/30">
+                    <div className="bg-dark-100/50 rounded-2xl p-4 lg:p-6 border border-dark-300/30">
                       <div className="flex items-center justify-between mb-4">
                         <h3 className="text-lg font-bold text-dark-900">Heading Font</h3>
                         <div className="flex items-center space-x-2">
@@ -290,17 +313,17 @@ export const MoodboardView: React.FC<MoodboardViewProps> = ({
                           <p className="text-sm font-semibold text-dark-700 mb-2">{moodboard.fontPairing.heading.name}</p>
                           <p className="text-xs text-dark-500 mb-4">{moodboard.fontPairing.heading.category}</p>
                         </div>
-                        <div className="space-y-3" style={{ fontFamily: moodboard.fontPairing.heading.name }}>
-                          <h1 className="text-4xl font-bold text-dark-900">Heading 1</h1>
-                          <h2 className="text-3xl font-bold text-dark-800">Heading 2</h2>
-                          <h3 className="text-2xl font-semibold text-dark-700">Heading 3</h3>
-                          <h4 className="text-xl font-semibold text-dark-700">Heading 4</h4>
+                        <div className="space-y-2 lg:space-y-3" style={{ fontFamily: moodboard.fontPairing.heading.name }}>
+                          <h1 className="text-2xl lg:text-4xl font-bold text-dark-900">Heading 1</h1>
+                          <h2 className="text-xl lg:text-3xl font-bold text-dark-800">Heading 2</h2>
+                          <h3 className="text-lg lg:text-2xl font-semibold text-dark-700">Heading 3</h3>
+                          <h4 className="text-base lg:text-xl font-semibold text-dark-700">Heading 4</h4>
                         </div>
                       </div>
                     </div>
 
                     {/* Body Font */}
-                    <div className="bg-dark-100/50 rounded-2xl p-6 border border-dark-300/30">
+                    <div className="bg-dark-100/50 rounded-2xl p-4 lg:p-6 border border-dark-300/30">
                       <div className="flex items-center justify-between mb-4">
                         <h3 className="text-lg font-bold text-dark-900">Body Font</h3>
                         <div className="flex items-center space-x-2">
@@ -323,10 +346,10 @@ export const MoodboardView: React.FC<MoodboardViewProps> = ({
                           <p className="text-sm font-semibold text-dark-700 mb-2">{moodboard.fontPairing.body.name}</p>
                           <p className="text-xs text-dark-500 mb-4">{moodboard.fontPairing.body.category}</p>
                         </div>
-                        <div className="space-y-3" style={{ fontFamily: moodboard.fontPairing.body.name }}>
-                          <p className="text-lg text-dark-800">Large body text for introductions and important content.</p>
-                          <p className="text-base text-dark-700">Regular body text for paragraphs and descriptions. The quick brown fox jumps over the lazy dog.</p>
-                          <p className="text-sm text-dark-600">Small text for captions and metadata.</p>
+                        <div className="space-y-2 lg:space-y-3" style={{ fontFamily: moodboard.fontPairing.body.name }}>
+                          <p className="text-base lg:text-lg text-dark-800">Large body text for introductions and important content.</p>
+                          <p className="text-sm lg:text-base text-dark-700">Regular body text for paragraphs and descriptions. The quick brown fox jumps over the lazy dog.</p>
+                          <p className="text-xs lg:text-sm text-dark-600">Small text for captions and metadata.</p>
                           <p className="text-xs text-dark-500">Extra small text for fine print and labels.</p>
                         </div>
                       </div>
@@ -336,16 +359,16 @@ export const MoodboardView: React.FC<MoodboardViewProps> = ({
               )}
             </div>
 
-            {/* Visual Inspiration Section */}
-            <div className="bg-dark-200/40 backdrop-blur-xl rounded-3xl border border-dark-300/30 overflow-hidden">
-              <div className="p-6 border-b border-dark-300/30">
+            {/* Visual Inspiration Section - Mobile Optimized */}
+            <div className="bg-dark-200/40 backdrop-blur-xl rounded-2xl lg:rounded-3xl border border-dark-300/30 overflow-hidden">
+              <div className="p-4 lg:p-6 border-b border-dark-300/30">
                 <div className="flex items-center justify-between">
                   <button
                     onClick={() => toggleSection('inspiration')}
                     className="flex items-center space-x-3"
                   >
-                    <Image className="w-6 h-6 text-primary-500" />
-                    <h2 className="text-2xl font-bold text-dark-900">Visual Inspiration</h2>
+                    <Image className="w-5 lg:w-6 h-5 lg:h-6 text-primary-500" />
+                    <h2 className="text-xl lg:text-2xl font-bold text-dark-900">Visual Inspiration</h2>
                     {expandedSections.has('inspiration') ? 
                       <ChevronUp className="w-5 h-5 text-dark-600" /> : 
                       <ChevronDown className="w-5 h-5 text-dark-600" />
@@ -362,18 +385,18 @@ export const MoodboardView: React.FC<MoodboardViewProps> = ({
               </div>
 
               {expandedSections.has('inspiration') && (
-                <div className="p-6">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="p-4 lg:p-6">
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
                     {moodboard.visualInspiration.map((inspiration, index) => (
-                      <div key={index} className="bg-dark-100/50 rounded-2xl p-6 border border-dark-300/30 hover:shadow-xl transition-all duration-300">
+                      <div key={index} className="bg-dark-100/50 rounded-2xl p-4 lg:p-6 border border-dark-300/30 hover:shadow-xl transition-all duration-300">
                         <div className="flex items-center space-x-3 mb-4">
                           <div className="p-2 rounded-lg bg-gradient-to-r from-primary-500 to-primary-600">
-                            <Sparkles className="w-5 h-5 text-white" />
+                            <Sparkles className="w-4 lg:w-5 h-4 lg:h-5 text-white" />
                           </div>
-                          <h3 className="text-lg font-bold text-dark-900">{inspiration.title}</h3>
+                          <h3 className="text-base lg:text-lg font-bold text-dark-900 truncate">{inspiration.title}</h3>
                         </div>
                         
-                        <p className="text-dark-700 mb-4 leading-relaxed">{inspiration.description}</p>
+                        <p className="text-dark-700 mb-4 leading-relaxed text-sm lg:text-base">{inspiration.description}</p>
                         
                         <div className="space-y-3">
                           <div>
@@ -387,7 +410,7 @@ export const MoodboardView: React.FC<MoodboardViewProps> = ({
                               {inspiration.colors.map((color, colorIndex) => (
                                 <div
                                   key={colorIndex}
-                                  className="w-8 h-8 rounded-lg border-2 border-dark-300 shadow-sm"
+                                  className="w-6 h-6 lg:w-8 lg:h-8 rounded-lg border-2 border-dark-300 shadow-sm"
                                   style={{ backgroundColor: color }}
                                   title={color}
                                 />
@@ -413,8 +436,8 @@ export const MoodboardView: React.FC<MoodboardViewProps> = ({
                             <h4 className="text-sm font-semibold text-dark-800 mb-2">Use Cases</h4>
                             <ul className="text-sm text-dark-600 space-y-1">
                               {inspiration.useCases.map((useCase, useCaseIndex) => (
-                                <li key={useCaseIndex} className="flex items-center space-x-2">
-                                  <div className="w-1.5 h-1.5 bg-primary-500 rounded-full"></div>
+                                <li key={useCaseIndex} className="flex items-start space-x-2">
+                                  <div className="w-1.5 h-1.5 bg-primary-500 rounded-full mt-2 flex-shrink-0"></div>
                                   <span>{useCase}</span>
                                 </li>
                               ))}
@@ -428,16 +451,16 @@ export const MoodboardView: React.FC<MoodboardViewProps> = ({
               )}
             </div>
 
-            {/* Component Suggestions Section */}
-            <div className="bg-dark-200/40 backdrop-blur-xl rounded-3xl border border-dark-300/30 overflow-hidden">
-              <div className="p-6 border-b border-dark-300/30">
+            {/* Component Suggestions Section - Mobile Optimized */}
+            <div className="bg-dark-200/40 backdrop-blur-xl rounded-2xl lg:rounded-3xl border border-dark-300/30 overflow-hidden">
+              <div className="p-4 lg:p-6 border-b border-dark-300/30">
                 <div className="flex items-center justify-between">
                   <button
                     onClick={() => toggleSection('components')}
                     className="flex items-center space-x-3"
                   >
-                    <Layers className="w-6 h-6 text-primary-500" />
-                    <h2 className="text-2xl font-bold text-dark-900">Component Library</h2>
+                    <Layers className="w-5 lg:w-6 h-5 lg:h-6 text-primary-500" />
+                    <h2 className="text-xl lg:text-2xl font-bold text-dark-900">Component Library</h2>
                     {expandedSections.has('components') ? 
                       <ChevronUp className="w-5 h-5 text-dark-600" /> : 
                       <ChevronDown className="w-5 h-5 text-dark-600" />
@@ -454,23 +477,23 @@ export const MoodboardView: React.FC<MoodboardViewProps> = ({
               </div>
 
               {expandedSections.has('components') && (
-                <div className="p-6">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="p-4 lg:p-6">
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
                     {moodboard.componentSuggestions.map((component, index) => (
-                      <div key={index} className="bg-dark-100/50 rounded-2xl p-6 border border-dark-300/30 hover:shadow-xl transition-all duration-300">
+                      <div key={index} className="bg-dark-100/50 rounded-2xl p-4 lg:p-6 border border-dark-300/30 hover:shadow-xl transition-all duration-300">
                         <div className="flex items-center justify-between mb-4">
-                          <h3 className="text-lg font-bold text-dark-900">{component.component}</h3>
-                          <span className="px-3 py-1 bg-primary-500/20 text-primary-600 rounded-full text-xs font-medium">
+                          <h3 className="text-base lg:text-lg font-bold text-dark-900 truncate">{component.component}</h3>
+                          <span className="px-2 lg:px-3 py-1 bg-primary-500/20 text-primary-600 rounded-full text-xs font-medium">
                             {component.category}
                           </span>
                         </div>
                         
-                        <p className="text-dark-700 mb-4">{component.description}</p>
+                        <p className="text-dark-700 mb-4 text-sm lg:text-base">{component.description}</p>
                         
                         <div className="space-y-3">
                           <div>
                             <h4 className="text-sm font-semibold text-dark-800 mb-2">Styling</h4>
-                            <code className="text-xs bg-dark-300/50 text-dark-700 p-2 rounded-lg block font-mono">
+                            <code className="text-xs bg-dark-300/50 text-dark-700 p-2 rounded-lg block font-mono break-all">
                               {component.styling}
                             </code>
                           </div>
@@ -480,9 +503,9 @@ export const MoodboardView: React.FC<MoodboardViewProps> = ({
                               <h4 className="text-sm font-semibold text-dark-800 mb-2">States</h4>
                               <div className="space-y-2">
                                 {Object.entries(component.states).map(([state, styling]) => (
-                                  <div key={state} className="flex items-center space-x-3">
+                                  <div key={state} className="flex flex-col sm:flex-row sm:items-center space-y-1 sm:space-y-0 sm:space-x-3">
                                     <span className="text-xs font-medium text-dark-600 w-16 capitalize">{state}:</span>
-                                    <code className="text-xs bg-dark-300/50 text-dark-700 px-2 py-1 rounded font-mono flex-1">
+                                    <code className="text-xs bg-dark-300/50 text-dark-700 px-2 py-1 rounded font-mono flex-1 break-all">
                                       {styling}
                                     </code>
                                   </div>
@@ -499,8 +522,8 @@ export const MoodboardView: React.FC<MoodboardViewProps> = ({
             </div>
           </div>
 
-          {/* Sidebar */}
-          <div className="lg:col-span-1">
+          {/* Sidebar - Hidden on mobile, shown on desktop */}
+          <div className="hidden lg:block lg:col-span-1">
             <div className="sticky top-32 space-y-6">
               
               {/* Design Principles */}
@@ -562,7 +585,7 @@ export const MoodboardView: React.FC<MoodboardViewProps> = ({
             </div>
           </div>
         </div>
-      </div>
+      </ResponsiveContainer>
 
       {/* Font Selector Modal */}
       {showFontSelector && (
@@ -578,7 +601,7 @@ export const MoodboardView: React.FC<MoodboardViewProps> = ({
               </button>
             </div>
             <div className="p-6 max-h-[70vh] overflow-y-auto">
-              <FontSelector
+              <EnhancedFontSelector
                 selectedFont={showFontSelector.type === 'heading' ? moodboard.fontPairing.heading.name : moodboard.fontPairing.body.name}
                 onFontChange={(font) => {
                   // TODO: Update font in moodboard

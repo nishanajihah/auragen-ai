@@ -1,46 +1,49 @@
 import React, { useState, useEffect } from 'react';
-import { Header } from './components/Header';
+import { Layout } from './components/Layout';
 import { ConversationView } from './components/ConversationView';
 import { MoodboardView } from './components/MoodboardView';
 import { ProjectManager } from './components/ProjectManager';
 import { FontSelectionModal } from './components/FontSelectionModal';
 import { SaveProjectModal } from './components/SaveProjectModal';
 import { AuthModal } from './components/AuthModal';
-import { PremiumModal } from './components/PremiumModal';
+import { EnhancedPremiumModal } from './components/EnhancedPremiumModal';
 import { ExportModal } from './components/ExportModal';
 import { SettingsPage } from './components/SettingsPage';
-import { NotificationContainer } from './components/NotificationContainer';
-import { UsageIndicator } from './components/UsageIndicator';
 import { VoiceControls } from './components/VoiceControls';
 import { LandingPage } from './components/LandingPage';
 import { PricingPage } from './components/PricingPage';
 import { ErrorPage, NotFoundPage, ServerErrorPage } from './components/ErrorPage';
+import { ProjectIndicator } from './components/ProjectIndicator';
+import { MobileNavigation } from './components/MobileNavigation';
+import { GoogleFontsProvider } from './components/GoogleFontsProvider';
+import { RevenueCatProvider, useRevenueCat } from './components/RevenueCatProvider';
 import { Message, MoodboardData, ProjectData, FontSelectionRequest } from './types';
 import { generateAuraResponse, handleRegenerateSection, resetConversation } from './services/mockApi';
 import { speakAuraResponse } from './services/elevenlabs';
-import { checkFeatureAccess, incrementUsage } from './services/revenuecat';
-import { checkPremiumStatus } from './services/revenuecat';
 import { useAuth } from './hooks/useAuth';
 import { analytics } from './services/analytics';
 import { notifications } from './services/notifications';
-import { checkFeatureAccess as checkFeatureAccessHelper } from './utils/helpers';
+import { checkFeatureAccess, incrementUsage } from './utils/helpers';
 import { VOICE_SETTINGS } from './utils/constants';
-import { getEnvironmentInfo, getUsageStats } from './services/gemini';
+import { getEnvironmentInfo } from './services/gemini';
 
 type ViewMode = 'conversation' | 'moodboard';
 type AppMode = 'landing' | 'pricing' | 'app' | 'settings' | 'error';
 
-function App() {
+function AppContent() {
   const { user, loading: authLoading } = useAuth();
+  const { isPremium, initializeRevenueCat } = useRevenueCat();
   const [appMode, setAppMode] = useState<AppMode>('landing');
   const [errorType, setErrorType] = useState<'404' | '500' | '403' | 'maintenance'>('404');
-  const [darkMode, setDarkMode] = useState(true);
+  const [darkMode, setDarkMode] = useState(() => {
+    const saved = localStorage.getItem('auragen-theme');
+    return saved ? saved === 'dark' : true;
+  });
   const [messages, setMessages] = useState<Message[]>([]);
   const [moodboard, setMoodboard] = useState<MoodboardData | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [viewMode, setViewMode] = useState<ViewMode>('conversation');
   const [currentProject, setCurrentProject] = useState<string>('Nebula Bloom');
-  const [isPremium, setIsPremium] = useState(false);
   
   // Modal states
   const [showProjectManager, setShowProjectManager] = useState(false);
@@ -83,14 +86,22 @@ function App() {
     }
   });
 
+  // Theme persistence
   useEffect(() => {
+    const root = document.documentElement;
+    const body = document.body;
+    
     if (darkMode) {
-      document.documentElement.classList.add('dark');
-      document.body.classList.remove('light');
+      root.classList.add('dark');
+      root.classList.remove('light');
+      body.classList.remove('light');
     } else {
-      document.documentElement.classList.remove('dark');
-      document.body.classList.add('light');
+      root.classList.remove('dark');
+      root.classList.add('light');
+      body.classList.add('light');
     }
+    
+    localStorage.setItem('auragen-theme', darkMode ? 'dark' : 'light');
   }, [darkMode]);
 
   useEffect(() => {
@@ -110,7 +121,7 @@ function App() {
     if (user) {
       console.log('User logged in:', user);
       analytics.setUserId(user.id);
-      checkPremiumStatus().then(setIsPremium);
+      initializeRevenueCat(user.id);
       
       // Load user settings
       const savedSettings = localStorage.getItem(`auragen-settings-${user.id}`);
@@ -129,7 +140,7 @@ function App() {
         setAppMode('landing');
       }
     }
-  }, [user, appMode]);
+  }, [user, appMode, initializeRevenueCat]);
 
   useEffect(() => {
     const handleShowPremiumModal = () => setShowPremiumModal(true);
@@ -188,14 +199,14 @@ function App() {
       return;
     }
 
-    const accessCheck = checkFeatureAccessHelper('generation', isPremium, user.id);
+    const accessCheck = checkFeatureAccess('generation', isPremium, user.id);
     if (!accessCheck.allowed) {
       setPremiumContext({ 
         feature: 'generation', 
         limit: accessCheck.limit 
       });
       setShowPremiumModal(true);
-      notifications.limitReached('generation', accessCheck.limit || 0);
+      notifications.warning('Usage Limit Reached', `You've reached your daily limit of ${accessCheck.limit} generations. Upgrade to Premium for unlimited access.`);
       return;
     }
 
@@ -230,7 +241,7 @@ function App() {
       
       if (response.moodboard) {
         setMoodboard(response.moodboard);
-        notifications.generationSuccess();
+        notifications.success('Design Generated!', 'Your AI-powered design system is ready to explore.');
         setTimeout(() => setViewMode('moodboard'), 1000);
         
         // Auto-save if enabled
@@ -272,14 +283,14 @@ function App() {
       return;
     }
 
-    const accessCheck = checkFeatureAccessHelper('generation', isPremium, user.id);
+    const accessCheck = checkFeatureAccess('generation', isPremium, user.id);
     if (!accessCheck.allowed) {
       setPremiumContext({ 
         feature: 'generation', 
         limit: accessCheck.limit 
       });
       setShowPremiumModal(true);
-      notifications.limitReached('generation', accessCheck.limit || 0);
+      notifications.warning('Usage Limit Reached', `You've reached your daily limit of ${accessCheck.limit} generations. Upgrade to Premium for unlimited access.`);
       return;
     }
 
@@ -319,14 +330,14 @@ function App() {
       return;
     }
 
-    const accessCheck = checkFeatureAccessHelper('project', isPremium, user.id);
+    const accessCheck = checkFeatureAccess('project', isPremium, user.id);
     if (!accessCheck.allowed) {
       setPremiumContext({ 
         feature: 'project', 
         limit: accessCheck.limit 
       });
       setShowPremiumModal(true);
-      notifications.limitReached('project', accessCheck.limit || 0);
+      notifications.warning('Project Limit Reached', `You've reached your limit of ${accessCheck.limit} saved projects. Upgrade to Premium for unlimited projects.`);
       return;
     }
 
@@ -352,7 +363,7 @@ function App() {
     analytics.trackProjectSave(projectData.name, projectData.tags);
     
     setCurrentProject(projectData.name);
-    notifications.projectSaved(projectData.name);
+    notifications.success('Project Saved', `"${projectData.name}" has been saved successfully.`);
   };
 
   const handleLoadProject = (project: ProjectData) => {
@@ -428,14 +439,14 @@ function App() {
       return;
     }
 
-    const accessCheck = checkFeatureAccessHelper('export', isPremium, user.id);
+    const accessCheck = checkFeatureAccess('export', isPremium, user.id);
     if (!accessCheck.allowed) {
       setPremiumContext({ 
         feature: 'export', 
         limit: accessCheck.limit 
       });
       setShowPremiumModal(true);
-      notifications.limitReached('export', accessCheck.limit || 0);
+      notifications.warning('Export Limit Reached', `You've reached your daily limit of ${accessCheck.limit} exports. Upgrade to Premium for unlimited exports.`);
       return;
     }
 
@@ -459,7 +470,6 @@ function App() {
   };
 
   const handlePremiumSuccess = () => {
-    setIsPremium(true);
     analytics.trackPremiumUpgrade('monthly');
     notifications.success('Premium Activated!', 'You now have unlimited access to all features.');
   };
@@ -535,8 +545,6 @@ function App() {
           onSuccess={handleAuthSuccess}
           mode={authMode}
         />
-        
-        <NotificationContainer />
       </>
     );
   }
@@ -556,22 +564,26 @@ function App() {
           mode={authMode}
         />
         
-        <PremiumModal
+        <EnhancedPremiumModal
           isOpen={showPremiumModal}
           onClose={() => setShowPremiumModal(false)}
           onSuccess={handlePremiumSuccess}
           feature={premiumContext.feature}
           limit={premiumContext.limit}
         />
-        
-        <NotificationContainer />
       </>
     );
   }
 
   if (appMode === 'settings') {
     return (
-      <>
+      <Layout
+        darkMode={darkMode}
+        toggleDarkMode={toggleDarkMode}
+        user={user}
+        isPremium={isPremium}
+        showHeader={false}
+      >
         <SettingsPage
           user={user}
           isPremium={isPremium}
@@ -580,9 +592,7 @@ function App() {
           darkMode={darkMode}
           toggleDarkMode={toggleDarkMode}
         />
-        
-        <NotificationContainer />
-      </>
+      </Layout>
     );
   }
 
@@ -605,96 +615,96 @@ function App() {
           onSuccess={handleAuthSuccess}
           mode={authMode}
         />
-        
-        <NotificationContainer />
       </>
     );
   }
 
   console.log('Showing main app for user:', user);
   return (
-    <div className={`min-h-screen welcome-gradient ${!darkMode ? 'light' : ''} transition-all duration-700`}>
-      <Header 
-        darkMode={darkMode} 
-        toggleDarkMode={toggleDarkMode}
-        viewMode={viewMode}
-        setViewMode={setViewMode}
-        hasMoodboard={!!moodboard}
-        user={user}
-        onAuthClick={(mode) => {
-          setAuthMode(mode);
-          setShowAuthModal(true);
-        }}
-        onOpenSettings={handleOpenSettings}
-        onOpenProjectManager={() => setShowProjectManager(true)}
-        currentProject={currentProject}
-        isPremium={isPremium}
-        voiceControls={
-          <VoiceControls
-            isEnabled={voiceEnabled}
-            onToggle={setVoiceEnabled}
-            currentVoice={currentVoice}
-            onVoiceChange={setCurrentVoice}
+    <Layout
+      darkMode={darkMode}
+      toggleDarkMode={toggleDarkMode}
+      viewMode={viewMode}
+      setViewMode={setViewMode}
+      hasMoodboard={!!moodboard}
+      user={user}
+      onAuthClick={(mode) => {
+        setAuthMode(mode);
+        setShowAuthModal(true);
+      }}
+      onOpenSettings={handleOpenSettings}
+      onOpenProjectManager={() => setShowProjectManager(true)}
+      isPremium={isPremium}
+      voiceControls={
+        <VoiceControls
+          isEnabled={voiceEnabled}
+          onToggle={setVoiceEnabled}
+          currentVoice={currentVoice}
+          onVoiceChange={setCurrentVoice}
+        />
+      }
+    >
+      <div className="py-8">
+        {/* Project Indicator - Mobile Responsive */}
+        {moodboard && (
+          <div className="mb-6">
+            <ProjectIndicator
+              projectName={currentProject || 'Untitled Project'}
+              vibeSummary={moodboard.vibeSummary}
+              onOpenProjectManager={() => setShowProjectManager(true)}
+              className="sm:max-w-md"
+            />
+          </div>
+        )}
+
+        {/* Main Content */}
+        {viewMode === 'conversation' ? (
+          <ConversationView
+            messages={messages}
+            onSendMessage={handleSendMessage}
+            isLoading={isLoading}
+            darkMode={darkMode}
+            hasMoodboard={!!moodboard}
+            onViewMoodboard={() => setViewMode('moodboard')}
+            user={user}
           />
-        }
-      />
-      
-      {/* IMPROVED LAYOUT - Better spacing and responsive design */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="flex flex-col lg:flex-row gap-8">
-          {/* Main Content - Takes most space */}
-          <div className="flex-1 min-w-0">
-            {viewMode === 'conversation' ? (
-              <ConversationView
-                messages={messages}
-                onSendMessage={handleSendMessage}
-                isLoading={isLoading}
-                darkMode={darkMode}
-                hasMoodboard={!!moodboard}
-                onViewMoodboard={() => setViewMode('moodboard')}
-                user={user}
-              />
-            ) : (
-              <MoodboardView
-                moodboard={moodboard}
-                darkMode={darkMode}
-                onRegenerateSection={handleRegenerateSection}
-                isLoading={isLoading}
-                onBackToChat={() => setViewMode('conversation')}
-                projectName={currentProject || 'Untitled Project'}
-                onFontSelection={handleFontSelection}
-                onOpenProjectManager={() => setShowProjectManager(true)}
-                onExport={handleExport}
-              />
-            )}
-          </div>
+        ) : (
+          <MoodboardView
+            moodboard={moodboard}
+            darkMode={darkMode}
+            onRegenerateSection={handleRegenerateSection}
+            isLoading={isLoading}
+            onBackToChat={() => setViewMode('conversation')}
+            projectName={currentProject || 'Untitled Project'}
+            onFontSelection={handleFontSelection}
+            onOpenProjectManager={() => setShowProjectManager(true)}
+            onExport={handleExport}
+          />
+        )}
 
-          {/* Sidebar - Fixed width, better positioning */}
-          <div className="lg:w-80 flex-shrink-0">
-            {user && (
-              <div className="sticky top-24">
-                <UsageIndicator
-                  user={user}
-                  isPremium={isPremium}
-                  onUpgradeClick={() => setShowPremiumModal(true)}
-                />
-              </div>
-            )}
-          </div>
-        </div>
-      </main>
+        {/* Mobile Navigation */}
+        <MobileNavigation
+          viewMode={viewMode}
+          setViewMode={setViewMode}
+          hasMoodboard={!!moodboard}
+          onOpenSettings={handleOpenSettings}
+          onOpenProjectManager={() => setShowProjectManager(true)}
+          user={user}
+        />
 
-      <footer className={`text-center py-8 text-sm ${darkMode ? 'text-dark-500' : 'text-gray-500'}`}>
-        <p>
-          AuraGen AI - Transform your design vision into reality •{' '}
-          <button 
-            onClick={startNewConversation}
-            className="text-primary-500 hover:text-primary-600 underline transition-colors font-semibold"
-          >
-            Start New Conversation
-          </button>
-        </p>
-      </footer>
+        {/* Footer */}
+        <footer className={`text-center py-8 text-sm mt-16 ${darkMode ? 'text-dark-500' : 'text-gray-500'}`}>
+          <p>
+            AuraGen AI - Transform your design vision into reality •{' '}
+            <button 
+              onClick={startNewConversation}
+              className="text-primary-500 hover:text-primary-600 underline transition-colors font-semibold"
+            >
+              Start New Conversation
+            </button>
+          </p>
+        </footer>
+      </div>
 
       {/* Modals */}
       <ProjectManager
@@ -727,9 +737,8 @@ function App() {
         mode={authMode}
       />
 
-      <PremiumModal
+      <EnhancedPremiumModal
         isOpen={showPremiumModal}
-        
         onClose={() => setShowPremiumModal(false)}
         onSuccess={handlePremiumSuccess}
         feature={premiumContext.feature}
@@ -756,9 +765,17 @@ function App() {
           fontType={fontModalData.fontType}
         />
       )}
+    </Layout>
+  );
+}
 
-      <NotificationContainer />
-    </div>
+function App() {
+  return (
+    <GoogleFontsProvider>
+      <RevenueCatProvider>
+        <AppContent />
+      </RevenueCatProvider>
+    </GoogleFontsProvider>
   );
 }
 
