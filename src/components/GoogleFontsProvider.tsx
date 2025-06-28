@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState } from 'react';
 
 interface GoogleFont {
   family: string;
@@ -59,7 +59,10 @@ const POPULAR_FONTS: GoogleFont[] = [
 
 export const GoogleFontsProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [fonts] = useState<GoogleFont[]>(POPULAR_FONTS);
-  const [loadedFonts, setLoadedFonts] = useState<Set<string>>(new Set());
+  const [loadedFonts, setLoadedFonts] = useState<Set<string>>(
+    // Mark preloaded fonts as already loaded
+    new Set(['Inter', 'Poppins', 'Montserrat', 'Playfair Display'])
+  );
   const [isLoading, setIsLoading] = useState(false);
 
   const loadFont = async (fontFamily: string, weights: string[] = ['400']) => {
@@ -115,14 +118,6 @@ export const GoogleFontsProvider: React.FC<{ children: React.ReactNode }> = ({ c
 
     return filtered.sort((a, b) => (b.popularity || 0) - (a.popularity || 0));
   };
-
-  // Preload popular fonts
-  useEffect(() => {
-    const popularFonts = ['Inter', 'Poppins', 'Montserrat', 'Playfair Display'];
-    popularFonts.forEach(font => {
-      loadFont(font, ['400', '500', '600', '700']);
-    });
-  }, []);
 
   const value: GoogleFontsContextType = {
     fonts,
