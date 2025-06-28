@@ -3,22 +3,53 @@ import { createClient } from '@supabase/supabase-js';
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
 
-// Create Supabase client
-export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-  auth: {
-    autoRefreshToken: true,
-    persistSession: true,
-    detectSessionInUrl: true
+// Validate environment variables
+const isValidUrl = (url: string): boolean => {
+  try {
+    new URL(url);
+    return true;
+  } catch {
+    return false;
   }
-});
+};
+
+const isValidSupabaseConfig = (): boolean => {
+  return (
+    supabaseUrl && 
+    supabaseAnonKey && 
+    isValidUrl(supabaseUrl) &&
+    !supabaseUrl.includes('your_') && // Check for placeholder values
+    !supabaseAnonKey.includes('your_')
+  );
+};
+
+// Create Supabase client only if configuration is valid
+export const supabase = isValidSupabaseConfig() 
+  ? createClient(supabaseUrl, supabaseAnonKey, {
+      auth: {
+        autoRefreshToken: true,
+        persistSession: true,
+        detectSessionInUrl: true
+      }
+    })
+  : null;
+
+// Helper to check if Supabase is configured
+export const isSupabaseConfigured = (): boolean => {
+  return supabase !== null;
+};
 
 // Developer account email for special privileges
 const DEVELOPER_EMAIL = 'developer@auragen.ai';
 
-// Auth helpers
+// Auth helpers with configuration checks
 export const signUp = async (email: string, password: string, metadata?: any) => {
+  if (!isSupabaseConfigured()) {
+    return { data: null, error: new Error('Supabase is not configured. Please check your environment variables.') };
+  }
+
   try {
-    const { data, error } = await supabase.auth.signUp({
+    const { data, error } = await supabase!.auth.signUp({
       email,
       password,
       options: {
@@ -43,8 +74,12 @@ export const signUp = async (email: string, password: string, metadata?: any) =>
 };
 
 export const signIn = async (email: string, password: string) => {
+  if (!isSupabaseConfigured()) {
+    return { data: null, error: new Error('Supabase is not configured. Please check your environment variables.') };
+  }
+
   try {
-    const { data, error } = await supabase.auth.signInWithPassword({
+    const { data, error } = await supabase!.auth.signInWithPassword({
       email,
       password,
     });
@@ -55,7 +90,7 @@ export const signIn = async (email: string, password: string) => {
 
     // Update user metadata if developer
     if (email === DEVELOPER_EMAIL && data.user) {
-      await supabase.auth.updateUser({
+      await supabase!.auth.updateUser({
         data: {
           subscription_tier: 'developer',
           is_developer: true
@@ -71,8 +106,12 @@ export const signIn = async (email: string, password: string) => {
 };
 
 export const signOut = async () => {
+  if (!isSupabaseConfigured()) {
+    return { error: new Error('Supabase is not configured. Please check your environment variables.') };
+  }
+
   try {
-    const { error } = await supabase.auth.signOut();
+    const { error } = await supabase!.auth.signOut();
     if (error) {
       throw error;
     }
@@ -89,8 +128,12 @@ export const signOut = async () => {
 };
 
 export const getCurrentUser = async () => {
+  if (!isSupabaseConfigured()) {
+    return null;
+  }
+
   try {
-    const { data: { user }, error } = await supabase.auth.getUser();
+    const { data: { user }, error } = await supabase!.auth.getUser();
     if (error) {
       throw error;
     }
@@ -102,8 +145,12 @@ export const getCurrentUser = async () => {
 };
 
 export const resetPassword = async (email: string) => {
+  if (!isSupabaseConfigured()) {
+    return { error: new Error('Supabase is not configured. Please check your environment variables.') };
+  }
+
   try {
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+    const { error } = await supabase!.auth.resetPasswordForEmail(email, {
       redirectTo: `${window.location.origin}/reset-password`,
     });
     
@@ -119,8 +166,12 @@ export const resetPassword = async (email: string) => {
 };
 
 export const updatePassword = async (newPassword: string) => {
+  if (!isSupabaseConfigured()) {
+    return { error: new Error('Supabase is not configured. Please check your environment variables.') };
+  }
+
   try {
-    const { error } = await supabase.auth.updateUser({
+    const { error } = await supabase!.auth.updateUser({
       password: newPassword
     });
     
@@ -136,8 +187,12 @@ export const updatePassword = async (newPassword: string) => {
 };
 
 export const updateProfile = async (updates: any) => {
+  if (!isSupabaseConfigured()) {
+    return { error: new Error('Supabase is not configured. Please check your environment variables.') };
+  }
+
   try {
-    const { error } = await supabase.auth.updateUser({
+    const { error } = await supabase!.auth.updateUser({
       data: updates
     });
     
@@ -165,8 +220,12 @@ export const getUserTier = (user: any): 'free' | 'starter' | 'pro' | 'developer'
 
 // Database helpers
 export const saveProject = async (projectData: any) => {
+  if (!isSupabaseConfigured()) {
+    return { data: null, error: new Error('Supabase is not configured. Please check your environment variables.') };
+  }
+
   try {
-    const { data, error } = await supabase
+    const { data, error } = await supabase!
       .from('projects')
       .insert([projectData])
       .select();
@@ -183,8 +242,12 @@ export const saveProject = async (projectData: any) => {
 };
 
 export const getUserProjects = async (userId: string) => {
+  if (!isSupabaseConfigured()) {
+    return { data: [], error: new Error('Supabase is not configured. Please check your environment variables.') };
+  }
+
   try {
-    const { data, error } = await supabase
+    const { data, error } = await supabase!
       .from('projects')
       .select('*')
       .eq('user_id', userId)
@@ -203,8 +266,12 @@ export const getUserProjects = async (userId: string) => {
 
 // Usage tracking
 export const saveUsageData = async (userId: string, usageData: any) => {
+  if (!isSupabaseConfigured()) {
+    return { data: null, error: new Error('Supabase is not configured. Please check your environment variables.') };
+  }
+
   try {
-    const { data, error } = await supabase
+    const { data, error } = await supabase!
       .from('usage_tracking')
       .upsert([{
         user_id: userId,
@@ -225,9 +292,13 @@ export const saveUsageData = async (userId: string, usageData: any) => {
 };
 
 export const getUserUsage = async (userId: string) => {
+  if (!isSupabaseConfigured()) {
+    return { data: { generations: 0, exports: 0, projects: 0 }, error: new Error('Supabase is not configured. Please check your environment variables.') };
+  }
+
   try {
     const today = new Date().toISOString().split('T')[0];
-    const { data, error } = await supabase
+    const { data, error } = await supabase!
       .from('usage_tracking')
       .select('*')
       .eq('user_id', userId)
