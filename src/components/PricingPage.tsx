@@ -15,24 +15,22 @@ export const PricingPage: React.FC<PricingPageProps> = ({ onSelectPlan, onBack }
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly');
   const [hoveredPlan, setHoveredPlan] = useState<string | null>(null);
 
-  const plans = [
+ const plans = [
     {
-      id: 'free',
+      id: 'explorer',
       name: 'Explorer',
-      description: 'Perfect for discovering your design style',
+      description: 'Discover the power of AI-generated design systems for free.',
       price: { monthly: 0, yearly: 0 },
       badge: 'Free Forever',
       badgeColor: 'from-emerald-500 to-teal-600',
       emoji: '🎨',
       gradient: 'from-emerald-400 via-teal-500 to-cyan-600',
       features: [
-        '5 AI generations daily',
-        '3 saved projects',
-        '2 exports per day',
-        'Basic color palettes',
-        'Google Fonts library',
-        'Community support',
-        'Voice AI responses'
+        '3 AI Design System Generations daily (approx. 90/month)',
+        'Powered by Gemini 2.5 Flash Model',
+        'Basic documentation',
+        '1 active project',
+        'Community support'
       ],
       cta: 'Start Creating Free',
       highlight: false,
@@ -40,83 +38,124 @@ export const PricingPage: React.FC<PricingPageProps> = ({ onSelectPlan, onBack }
       popular: false
     },
     {
-      id: 'starter',
-      name: 'Innovator',
-      description: 'For creative professionals who mean business',
-      price: { monthly: 5, yearly: 50 },
-      badge: 'Great Value',
+      id: 'solo-creator',
+      name: 'Solo Creator',
+      description: 'More generations for individual designers and developers.',
+      price: { monthly: 2.99, yearly: 29 },
+      badge: 'Great Value!',
+      badgeColor: 'from-fuchsia-500 to-violet-600',
+      emoji: '💡',
+      gradient: 'from-fuchsia-400 via-violet-500 to-indigo-600',
+      features: [
+        '10 AI Design System Generations daily (approx. 300/month)',
+        'Powered by Gemini 2.5 Flash Model',
+        'Comprehensive documentation',
+        '5 active projects',
+        'Basic component library output',
+        'Priority email support'
+      ],
+      cta: 'Get Started',
+      highlight: false,
+      savings: 'Save $6.88/year', // ($2.99 * 12) - $29 = $6.88
+      popular: false
+    },
+    {
+      id: 'team-pro',
+      name: 'Team Pro',
+      description: 'Accelerate design system creation for professional teams.',
+      price: { monthly: 139, yearly: 1399 },
+      badge: 'Most Popular',
       badgeColor: 'from-blue-500 to-indigo-600',
       emoji: '🚀',
       gradient: 'from-blue-400 via-indigo-500 to-purple-600',
       features: [
-        '50 AI generations daily',
-        '10 saved projects',
-        '15 exports per day',
-        'Advanced color palettes',
-        'Dark mode palettes',
-        'Email support',
-        'All export formats',
-        'Voice AI with 4 voices',
-        'Project templates'
+        '50 AI Design System Generations daily (approx. 1,500/month)',
+        'Powered by Gemini 2.5 Pro (higher quality)',
+        'Voice AI for explanations (ElevenLabs)',
+        'Advanced documentation & guidelines',
+        'Full component library output (React, Vue, etc.)',
+        '25 active projects',
+        'Version control integration (Git)',
+        'Dedicated email support'
       ],
       cta: 'Start 7-Day Free Trial',
+      highlight: true,
+      savings: 'Save $269/year', // ($139 * 12) - $1399 = $269
+      popular: true
+    },
+    {
+      id: 'studio', // Renamed from Growth Business
+      name: 'Studio',
+      description: 'Empower your design studio with advanced AI capabilities.',
+      price: { monthly: 239, yearly: 2399 },
+      badge: 'For Agencies', // Changed badge
+      badgeColor: 'from-orange-500 to-red-600',
+      emoji: '✨',
+      gradient: 'from-orange-400 via-red-500 to-pink-600',
+      features: [
+        '100 AI Design System Generations daily (approx. 3,000/month)',
+        'Powered by Gemini 2.5 Pro',
+        'Voice AI for explanations (ElevenLabs)',
+        'Advanced documentation & interactive examples',
+        'Full component library + theming options',
+        '50 active projects',
+        'Team collaboration features',
+        'Priority chat support'
+      ],
+      cta: 'Start 14-Day Free Trial',
       highlight: false,
-      savings: billingCycle === 'yearly' ? 'Save $10/year' : null,
+      savings: 'Save $469/year', // ($239 * 12) - $2399 = $469
       popular: false
     },
     {
-      id: 'pro',
-      name: 'Visionary',
-      description: 'For design teams and agencies',
-      price: { monthly: 11, yearly: 110 },
-      badge: 'Most Popular',
+      id: 'enterprise', // Renamed from Enterprise Elite
+      name: 'Enterprise',
+      description: 'Comprehensive automation for large organizations and high volume needs.',
+      price: { monthly: 399, yearly: 3999 },
+      badge: 'High Volume', // Changed badge
       badgeColor: 'from-primary-500 to-primary-600',
       emoji: '⚡',
       gradient: 'from-primary-400 via-primary-500 to-primary-600',
       features: [
-        '200 AI generations daily',
-        'Unlimited saved projects',
-        '50 exports per day',
-        'Premium color palettes',
-        'Team collaboration (5 members)',
-        'Priority email support',
-        'API access (coming soon)',
-        'Custom branding',
-        'Usage analytics',
-        'Advanced templates'
+        '200 AI Design System Generations daily (approx. 6,000/month)',
+        'Powered by Gemini 2.5 Pro',
+        'Voice AI for explanations (ElevenLabs)',
+        'Customizable documentation templates',
+        'Advanced component library + motion design tokens',
+        'Unlimited active projects',
+        'Advanced analytics & usage insights',
+        'API access for custom integrations',
+        'Dedicated account manager',
+        '24/7 priority support'
       ],
       cta: 'Start 14-Day Free Trial',
-      highlight: true,
-      savings: billingCycle === 'yearly' ? 'Save $22/year' : null,
-      popular: true
+      highlight: false,
+      savings: 'Save $789/year', // ($399 * 12) - $3999 = $789
+      popular: false
     },
     {
-      id: 'enterprise',
-      name: 'Mastermind',
-      description: 'For large teams and enterprises',
-      price: { monthly: 25, yearly: 250 },
-      badge: 'Ultimate Power',
+      id: 'custom-enterprise', // Keeping this name, it clearly indicates a custom solution
+      name: 'Custom Enterprise',
+      description: 'Tailored solutions and dedicated support for large organizations with unique requirements.',
+      price: { monthly: 'Custom', yearly: 'Custom' },
+      badge: 'Bespoke',
       badgeColor: 'from-purple-500 to-pink-600',
       emoji: '👑',
       gradient: 'from-purple-400 via-pink-500 to-red-600',
       features: [
-        'Unlimited AI generations',
-        'Unlimited saved projects',
-        'Unlimited exports',
-        'White-label solutions',
-        'Team collaboration (25 members)',
-        'Priority chat support',
-        'Full API access',
-        'Custom integrations',
-        'Dedicated account manager',
-        'SLA guarantee'
+        'Custom AI generation quota',
+        'Custom AI model selection (e.g., GPT-4o, Claude Opus, fine-tuned models)',
+        'Custom ElevenLabs voice integration',
+        'On-premise deployment options',
+        'Dedicated engineering support',
+        'SLA (Service Level Agreement)'
       ],
-      cta: 'Start 30-Day Free Trial',
+      cta: 'Contact Sales',
       highlight: false,
-      savings: billingCycle === 'yearly' ? 'Save $50/year' : null,
+      savings: null,
       popular: false
     }
-  ];
+];
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-dark-50 via-dark-100 to-dark-200 relative overflow-hidden">
