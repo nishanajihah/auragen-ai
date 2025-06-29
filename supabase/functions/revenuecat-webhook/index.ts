@@ -21,8 +21,8 @@
     - Event tracking and analytics
 */
 
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { serve } from "std/http/server.ts"
+import { createClient } from '@supabase/supabase-js'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -101,27 +101,36 @@ async function verifyWebhookSignature(
 // Helper function to determine plan from product ID
 function getPlanFromProductId(productId: string): string {
   const planMapping: Record<string, string> = {
-    'premium_monthly': 'starter',
-    'premium_yearly': 'starter',
-    'pro_monthly': 'pro',
-    'pro_yearly': 'pro',
+    'premium_monthly': 'solo_creator',
+    'premium_yearly': 'solo_creator',
+    'pro_monthly': 'team_pro',
+    'pro_yearly': 'team_pro',
+    'studio_monthly': 'studio',
+    'studio_yearly': 'studio',
     'enterprise_monthly': 'enterprise',
-    'enterprise_yearly': 'enterprise'
+    'enterprise_yearly': 'enterprise',
+    'custom_enterprise': 'custom_enterprise'
   }
   
-  return planMapping[productId] || 'free'
+  return planMapping[productId] || 'explorer'
 }
 
 // Helper function to get generation limits based on plan
 function getGenerationLimits(planId: string): number {
   const limits: Record<string, number> = {
-    'free': 5,
-    'starter': 50,
-    'pro': 200,
-    'enterprise': -1 // unlimited
+    'explorer': 3,
+    'free': 3,
+    'solo_creator': 10,
+    'starter': 10,
+    'team_pro': 50,
+    'pro': 50,
+    'studio': 100,
+    'enterprise': 200,
+    'custom_enterprise': -1, // unlimited
+    'developer': -1 // unlimited
   }
   
-  return limits[planId] || 5
+  return limits[planId] || 3
 }
 
 serve(async (req) => {
@@ -277,7 +286,7 @@ serve(async (req) => {
     // Process different event types
     let updateData: any = {}
     let subscriptionStatus = 'free'
-    let planId = 'free'
+    let planId = 'explorer'
 
     switch (eventType) {
       case 'INITIAL_PURCHASE':
@@ -300,7 +309,7 @@ serve(async (req) => {
       case 'CANCELLATION':
       case 'EXPIRATION':
         subscriptionStatus = 'free'
-        planId = 'free'
+        planId = 'explorer'
         
         updateData = {
           plan_id: planId,

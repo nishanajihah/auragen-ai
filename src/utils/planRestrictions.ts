@@ -24,16 +24,38 @@ export interface PlanLimits {
 }
 
 export const PLAN_LIMITS: Record<string, PlanLimits> = {
-  free: {
+  explorer: {
     generations: {
-      daily: 5,
+      daily: 3,
       model: 'gemini-1.5-flash'
     },
     projects: {
-      total: 3
+      total: 1
     },
     exports: {
-      daily: 2
+      daily: 1
+    },
+    voice: {
+      enabled: true,
+      charactersPerDay: 1000
+    },
+    features: {
+      advancedPalettes: false,
+      prioritySupport: false,
+      apiAccess: false,
+      customBranding: false
+    }
+  },
+  free: {
+    generations: {
+      daily: 3,
+      model: 'gemini-1.5-flash'
+    },
+    projects: {
+      total: 1
+    },
+    exports: {
+      daily: 1
     },
     voice: {
       enabled: true,
@@ -48,14 +70,36 @@ export const PLAN_LIMITS: Record<string, PlanLimits> = {
   },
   starter: {
     generations: {
-      daily: 50,
+      daily: 10,
       model: 'gemini-1.5-flash'
     },
     projects: {
-      total: 10
+      total: 5
     },
     exports: {
-      daily: 15
+      daily: 3
+    },
+    voice: {
+      enabled: true,
+      charactersPerDay: 5000
+    },
+    features: {
+      advancedPalettes: true,
+      prioritySupport: false,
+      apiAccess: false,
+      customBranding: false
+    }
+  },
+  solo_creator: {
+    generations: {
+      daily: 10,
+      model: 'gemini-1.5-flash'
+    },
+    projects: {
+      total: 5
+    },
+    exports: {
+      daily: 3
     },
     voice: {
       enabled: true,
@@ -70,6 +114,72 @@ export const PLAN_LIMITS: Record<string, PlanLimits> = {
   },
   pro: {
     generations: {
+      daily: 50,
+      model: 'gemini-1.5-pro'
+    },
+    projects: {
+      total: 25
+    },
+    exports: {
+      daily: 15
+    },
+    voice: {
+      enabled: true,
+      charactersPerDay: 20000
+    },
+    features: {
+      advancedPalettes: true,
+      prioritySupport: true,
+      apiAccess: true,
+      customBranding: true
+    }
+  },
+  team_pro: {
+    generations: {
+      daily: 50,
+      model: 'gemini-1.5-pro'
+    },
+    projects: {
+      total: 25
+    },
+    exports: {
+      daily: 15
+    },
+    voice: {
+      enabled: true,
+      charactersPerDay: 20000
+    },
+    features: {
+      advancedPalettes: true,
+      prioritySupport: true,
+      apiAccess: true,
+      customBranding: true
+    }
+  },
+  studio: {
+    generations: {
+      daily: 100,
+      model: 'gemini-1.5-pro'
+    },
+    projects: {
+      total: 50
+    },
+    exports: {
+      daily: 50
+    },
+    voice: {
+      enabled: true,
+      charactersPerDay: 50000
+    },
+    features: {
+      advancedPalettes: true,
+      prioritySupport: true,
+      apiAccess: true,
+      customBranding: true
+    }
+  },
+  enterprise: {
+    generations: {
       daily: 200,
       model: 'gemini-1.5-pro'
     },
@@ -77,11 +187,33 @@ export const PLAN_LIMITS: Record<string, PlanLimits> = {
       total: -1 // unlimited
     },
     exports: {
-      daily: 50
+      daily: -1 // unlimited
     },
     voice: {
       enabled: true,
-      charactersPerDay: 20000
+      charactersPerDay: -1 // unlimited
+    },
+    features: {
+      advancedPalettes: true,
+      prioritySupport: true,
+      apiAccess: true,
+      customBranding: true
+    }
+  },
+  custom_enterprise: {
+    generations: {
+      daily: -1, // unlimited
+      model: 'gemini-1.5-pro'
+    },
+    projects: {
+      total: -1 // unlimited
+    },
+    exports: {
+      daily: -1 // unlimited
+    },
+    voice: {
+      enabled: true,
+      charactersPerDay: -1 // unlimited
     },
     features: {
       advancedPalettes: true,
@@ -115,8 +247,13 @@ export const PLAN_LIMITS: Record<string, PlanLimits> = {
 };
 
 export const getUserPlanLimits = (user: any): PlanLimits => {
+  if (!user) return PLAN_LIMITS.explorer;
+  
   const tier = getUserTier(user);
-  return PLAN_LIMITS[tier] || PLAN_LIMITS.free;
+  // Convert tier to snake_case for matching with PLAN_LIMITS keys
+  const tierKey = tier.replace(/-/g, '_');
+  
+  return PLAN_LIMITS[tierKey] || PLAN_LIMITS.explorer;
 };
 
 export const checkFeatureAccess = (
@@ -176,9 +313,15 @@ export const canUseVoice = (user: any): boolean => {
 
 export const getPlanDisplayName = (tier: string): string => {
   const names = {
+    explorer: 'Explorer',
     free: 'Explorer',
-    starter: 'Innovator', 
-    pro: 'Visionary',
+    starter: 'Solo Creator',
+    solo_creator: 'Solo Creator',
+    pro: 'Team Pro',
+    team_pro: 'Team Pro',
+    studio: 'Studio',
+    enterprise: 'Enterprise',
+    custom_enterprise: 'Custom Enterprise',
     developer: 'Developer'
   };
   return names[tier as keyof typeof names] || 'Explorer';
@@ -186,10 +329,16 @@ export const getPlanDisplayName = (tier: string): string => {
 
 export const getPlanColor = (tier: string): string => {
   const colors = {
-    free: 'from-blue-500 to-indigo-600',
-    starter: 'from-green-500 to-emerald-600',
-    pro: 'from-purple-500 to-pink-600',
+    explorer: 'from-emerald-500 to-teal-600',
+    free: 'from-emerald-500 to-teal-600',
+    starter: 'from-blue-500 to-indigo-600',
+    solo_creator: 'from-blue-500 to-indigo-600',
+    pro: 'from-primary-500 to-primary-600',
+    team_pro: 'from-primary-500 to-primary-600',
+    studio: 'from-orange-500 to-red-600',
+    enterprise: 'from-purple-500 to-pink-600',
+    custom_enterprise: 'from-purple-500 to-pink-600',
     developer: 'from-orange-500 to-red-600'
   };
-  return colors[tier as keyof typeof colors] || 'from-blue-500 to-indigo-600';
+  return colors[tier as keyof typeof colors] || 'from-emerald-500 to-teal-600';
 };

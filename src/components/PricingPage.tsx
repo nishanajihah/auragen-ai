@@ -3,7 +3,8 @@ import {
   Check, Crown, Zap, Palette, Download, Users, 
   Sparkles, ArrowRight, Star, Gift, Rocket, Heart,
   Coffee, TrendingUp, Shield, Target, Lightbulb,
-  DollarSign, Flame, Diamond, Trophy, ArrowLeft
+  DollarSign, Flame, Diamond, Trophy, ArrowLeft,
+  Clock, AlertTriangle, HelpCircle, Info
 } from 'lucide-react';
 
 interface PricingPageProps {
@@ -35,7 +36,8 @@ export const PricingPage: React.FC<PricingPageProps> = ({ onSelectPlan, onBack }
       cta: 'Start Creating Free',
       highlight: false,
       savings: null,
-      popular: false
+      popular: false,
+      available: true
     },
     {
       id: 'solo-creator',
@@ -57,7 +59,8 @@ export const PricingPage: React.FC<PricingPageProps> = ({ onSelectPlan, onBack }
       cta: 'Get Started',
       highlight: false,
       savings: 'Save $6.88/year', // ($2.99 * 12) - $29 = $6.88
-      popular: false
+      popular: false,
+      available: true
     },
     {
       id: 'team-pro',
@@ -81,14 +84,15 @@ export const PricingPage: React.FC<PricingPageProps> = ({ onSelectPlan, onBack }
       cta: 'Start 7-Day Free Trial',
       highlight: true,
       savings: 'Save $269/year', // ($139 * 12) - $1399 = $269
-      popular: true
+      popular: true,
+      available: true
     },
     {
       id: 'studio', // Renamed from Growth Business
       name: 'Studio',
       description: 'Empower your design studio with advanced AI capabilities.',
       price: { monthly: 239, yearly: 2399 },
-      badge: 'For Agencies', // Changed badge
+      badge: 'Coming Soon',
       badgeColor: 'from-orange-500 to-red-600',
       emoji: '✨',
       gradient: 'from-orange-400 via-red-500 to-pink-600',
@@ -102,17 +106,19 @@ export const PricingPage: React.FC<PricingPageProps> = ({ onSelectPlan, onBack }
         'Team collaboration features',
         'Priority chat support'
       ],
-      cta: 'Start 14-Day Free Trial',
+      cta: 'Coming Soon',
       highlight: false,
       savings: 'Save $469/year', // ($239 * 12) - $2399 = $469
-      popular: false
+      popular: false,
+      available: false,
+      inProgress: true
     },
     {
       id: 'enterprise', // Renamed from Enterprise Elite
       name: 'Enterprise',
       description: 'Comprehensive automation for large organizations and high volume needs.',
       price: { monthly: 399, yearly: 3999 },
-      badge: 'High Volume', // Changed badge
+      badge: 'Coming Soon',
       badgeColor: 'from-primary-500 to-primary-600',
       emoji: '⚡',
       gradient: 'from-primary-400 via-primary-500 to-primary-600',
@@ -128,17 +134,19 @@ export const PricingPage: React.FC<PricingPageProps> = ({ onSelectPlan, onBack }
         'Dedicated account manager',
         '24/7 priority support'
       ],
-      cta: 'Start 14-Day Free Trial',
+      cta: 'Coming Soon',
       highlight: false,
       savings: 'Save $789/year', // ($399 * 12) - $3999 = $789
-      popular: false
+      popular: false,
+      available: false,
+      inProgress: true
     },
     {
       id: 'custom-enterprise', // Keeping this name, it clearly indicates a custom solution
       name: 'Custom Enterprise',
       description: 'Tailored solutions and dedicated support for large organizations with unique requirements.',
       price: { monthly: 'Custom', yearly: 'Custom' },
-      badge: 'Bespoke',
+      badge: 'Contact Sales',
       badgeColor: 'from-purple-500 to-pink-600',
       emoji: '👑',
       gradient: 'from-purple-400 via-pink-500 to-red-600',
@@ -153,9 +161,31 @@ export const PricingPage: React.FC<PricingPageProps> = ({ onSelectPlan, onBack }
       cta: 'Contact Sales',
       highlight: false,
       savings: null,
-      popular: false
+      popular: false,
+      available: false,
+      inProgress: true
     }
 ];
+
+  // Feature development status
+  const featureStatus = {
+    fullComponentLibrary: {
+      status: 'in-progress',
+      message: 'Our team is currently building a comprehensive component library with React, Vue, and other framework support.'
+    },
+    gitIntegration: {
+      status: 'in-progress',
+      message: 'Version control integration is under active development and will be available soon.'
+    },
+    advancedDocumentation: {
+      status: 'in-progress',
+      message: 'Enhanced documentation features with interactive examples are coming soon.'
+    },
+    teamCollaboration: {
+      status: 'planned',
+      message: 'Team collaboration features are on our roadmap for Q3 2025.'
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-dark-50 via-dark-100 to-dark-200 relative overflow-hidden">
@@ -228,6 +258,39 @@ export const PricingPage: React.FC<PricingPageProps> = ({ onSelectPlan, onBack }
             </div>
           </div>
 
+          {/* Development Status Banner */}
+          <div className="mb-10 bg-blue-500/10 border border-blue-500/30 rounded-2xl p-6 backdrop-blur-xl">
+            <div className="flex items-start space-x-4">
+              <Info className="w-6 h-6 text-blue-500 flex-shrink-0 mt-1" />
+              <div>
+                <h3 className="text-lg font-bold text-dark-900 mb-2">Development Status</h3>
+                <p className="text-dark-600 mb-4">
+                  We're actively developing additional plans and features. Currently, the Explorer, Solo Creator, and Team Pro plans are available, 
+                  with more options coming soon. Features marked with <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-amber-500/20 text-amber-600">In Progress</span> are 
+                  under active development.
+                </p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                  <div className="flex items-center space-x-2">
+                    <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                    <span className="text-dark-700">Available Now</span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <div className="w-3 h-3 bg-amber-500 rounded-full"></div>
+                    <span className="text-dark-700">In Progress</span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
+                    <span className="text-dark-700">Coming Soon</span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <div className="w-3 h-3 bg-gray-400 rounded-full"></div>
+                    <span className="text-dark-700">Planned</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
           {/* Pricing Cards */}
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-20">
             {plans.map((plan, index) => (
@@ -235,7 +298,7 @@ export const PricingPage: React.FC<PricingPageProps> = ({ onSelectPlan, onBack }
                 key={plan.id}
                 onMouseEnter={() => setHoveredPlan(plan.id)}
                 onMouseLeave={() => setHoveredPlan(null)}
-                className={`relative rounded-3xl p-6 transition-all duration-500 transform hover:scale-105 ${
+                className={`relative rounded-3xl p-6 transition-all duration-500 transform ${plan.available ? 'hover:scale-105' : 'opacity-90'} ${
                   plan.highlight
                     ? 'bg-gradient-to-br from-primary-500/10 via-primary-600/15 to-primary-700/10 border-3 border-primary-500/50 shadow-3xl ring-4 ring-primary-500/20 scale-105'
                     : 'bg-dark-200/40 backdrop-blur-2xl border-2 border-dark-300/30 hover:border-primary-500/50 shadow-2xl hover:shadow-3xl'
@@ -252,6 +315,25 @@ export const PricingPage: React.FC<PricingPageProps> = ({ onSelectPlan, onBack }
                   </div>
                 )}
 
+                {/* Coming Soon Badge */}
+                {!plan.available && (
+                  <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
+                    <div className={`bg-gradient-to-r ${plan.badgeColor} text-white px-4 py-2 rounded-full text-sm font-bold shadow-xl flex items-center space-x-2`}>
+                      {plan.inProgress ? (
+                        <>
+                          <Clock className="w-4 h-4" />
+                          <span>{plan.badge}</span>
+                        </>
+                      ) : (
+                        <>
+                          <AlertTriangle className="w-4 h-4" />
+                          <span>{plan.badge}</span>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                )}
+
                 {/* Plan Header */}
                 <div className="text-center mb-6">
                   <div className="text-4xl mb-3 animate-float">{plan.emoji}</div>
@@ -260,13 +342,21 @@ export const PricingPage: React.FC<PricingPageProps> = ({ onSelectPlan, onBack }
                   
                   <div className="mb-6">
                     <div className="flex items-baseline justify-center mb-2">
-                      <span className="text-4xl font-black text-dark-900">
-                        ${plan.price[billingCycle]}
-                      </span>
-                      {plan.price[billingCycle] > 0 && (
-                        <span className="text-dark-600 ml-2 text-lg font-semibold">
-                          /{billingCycle === 'monthly' ? 'mo' : 'yr'}
+                      {typeof plan.price[billingCycle] === 'string' ? (
+                        <span className="text-4xl font-black text-dark-900">
+                          {plan.price[billingCycle]}
                         </span>
+                      ) : (
+                        <>
+                          <span className="text-4xl font-black text-dark-900">
+                            ${plan.price[billingCycle]}
+                          </span>
+                          {plan.price[billingCycle] > 0 && (
+                            <span className="text-dark-600 ml-2 text-lg font-semibold">
+                              /{billingCycle === 'monthly' ? 'mo' : 'yr'}
+                            </span>
+                          )}
+                        </>
                       )}
                     </div>
                     {plan.savings && billingCycle === 'yearly' && (
@@ -278,20 +368,27 @@ export const PricingPage: React.FC<PricingPageProps> = ({ onSelectPlan, onBack }
                   </div>
 
                   <button
-                    onClick={() => onSelectPlan(plan.id as any)}
-                    className={`w-full py-4 rounded-xl font-bold text-sm transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl ${
+                    onClick={() => plan.available ? onSelectPlan(plan.id as any) : null}
+                    disabled={!plan.available}
+                    className={`w-full py-4 rounded-xl font-bold text-sm transition-all duration-300 transform ${plan.available ? 'hover:scale-105' : 'cursor-not-allowed opacity-80'} shadow-lg hover:shadow-xl ${
                       plan.highlight
                         ? 'bg-gradient-to-r from-primary-500 via-primary-600 to-primary-700 hover:from-primary-600 hover:via-primary-700 hover:to-primary-800 text-white'
-                        : plan.id === 'free'
+                        : plan.id === 'explorer'
                         ? 'bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white'
-                        : plan.id === 'starter'
+                        : plan.id === 'solo-creator'
                         ? 'bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white'
+                        : !plan.available && plan.id === 'custom-enterprise'
+                        ? 'bg-gradient-to-r from-purple-500 to-pink-600 text-white'
+                        : !plan.available
+                        ? 'bg-dark-300/70 text-dark-600'
                         : 'bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700 text-white'
                     }`}
                   >
                     <div className="flex items-center justify-center space-x-2">
-                      {plan.id === 'free' ? <Gift className="w-4 h-4" /> : 
+                      {plan.id === 'explorer' ? <Gift className="w-4 h-4" /> : 
                        plan.highlight ? <Rocket className="w-4 h-4" /> : 
+                       plan.id === 'custom-enterprise' ? <HelpCircle className="w-4 h-4" /> :
+                       !plan.available ? <Clock className="w-4 h-4" /> :
                        <Crown className="w-4 h-4" />}
                       <span>{plan.cta}</span>
                     </div>
@@ -305,14 +402,30 @@ export const PricingPage: React.FC<PricingPageProps> = ({ onSelectPlan, onBack }
                     <span>What's included:</span>
                   </h4>
                   <ul className="space-y-2">
-                    {plan.features.map((feature, featureIndex) => (
-                      <li key={featureIndex} className="flex items-start space-x-2">
-                        <div className="flex-shrink-0 w-5 h-5 rounded-full bg-gradient-to-r from-green-400 to-emerald-500 flex items-center justify-center mt-0.5">
-                          <Check className="w-3 h-3 text-white font-bold" />
-                        </div>
-                        <span className="text-dark-700 text-sm font-medium leading-relaxed">{feature}</span>
-                      </li>
-                    ))}
+                    {plan.features.map((feature, featureIndex) => {
+                      // Check if feature is in progress
+                      const isInProgress = 
+                        (feature.includes('Full component library') && featureStatus.fullComponentLibrary.status === 'in-progress') ||
+                        (feature.includes('Version control') && featureStatus.gitIntegration.status === 'in-progress') ||
+                        (feature.includes('Advanced documentation') && featureStatus.advancedDocumentation.status === 'in-progress') ||
+                        (feature.includes('Team collaboration') && featureStatus.teamCollaboration.status === 'planned');
+                      
+                      return (
+                        <li key={featureIndex} className="flex items-start space-x-2">
+                          <div className="flex-shrink-0 w-5 h-5 rounded-full bg-gradient-to-r from-green-400 to-emerald-500 flex items-center justify-center mt-0.5">
+                            <Check className="w-3 h-3 text-white font-bold" />
+                          </div>
+                          <div>
+                            <span className="text-dark-700 text-sm font-medium leading-relaxed">{feature}</span>
+                            {isInProgress && !plan.available && (
+                              <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-amber-500/20 text-amber-600">
+                                In Progress
+                              </span>
+                            )}
+                          </div>
+                        </li>
+                      );
+                    })}
                   </ul>
                 </div>
 
@@ -321,15 +434,88 @@ export const PricingPage: React.FC<PricingPageProps> = ({ onSelectPlan, onBack }
                   <div className="flex items-center justify-center space-x-2 text-xs">
                     <Trophy className="w-3 h-3 text-primary-500" />
                     <span className="text-dark-600 font-semibold">
-                      {plan.id === 'free' ? 'Perfect for beginners' :
-                       plan.id === 'starter' ? 'Great for freelancers' :
-                       plan.id === 'pro' ? 'Best for professionals' :
-                       'Ultimate for enterprises'}
+                      {plan.id === 'explorer' ? 'Perfect for beginners' :
+                       plan.id === 'solo-creator' ? 'Great for freelancers' :
+                       plan.id === 'team-pro' ? 'Best for professionals' :
+                       plan.id === 'studio' ? 'Ideal for design teams' :
+                       plan.id === 'enterprise' ? 'For large organizations' :
+                       'Custom enterprise solution'}
                     </span>
                   </div>
                 </div>
               </div>
             ))}
+          </div>
+
+          {/* Feature Development Status */}
+          <div className="mb-16 bg-dark-200/40 backdrop-blur-xl rounded-2xl p-8 border border-dark-300/30">
+            <h2 className="text-3xl font-bold text-dark-900 mb-6 text-center">
+              Feature Development Status
+            </h2>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              <div className="space-y-6">
+                <h3 className="text-xl font-bold text-dark-900 flex items-center space-x-2">
+                  <Rocket className="w-5 h-5 text-primary-500" />
+                  <span>In Progress Features</span>
+                </h3>
+                
+                <div className="space-y-4">
+                  <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-4">
+                    <div className="flex items-center space-x-2 mb-2">
+                      <Layers className="w-5 h-5 text-amber-500" />
+                      <h4 className="font-bold text-dark-900">Full Component Library</h4>
+                      <span className="px-2 py-0.5 bg-amber-500/20 text-amber-600 rounded-full text-xs font-medium">In Progress</span>
+                    </div>
+                    <p className="text-dark-600 text-sm">
+                      {featureStatus.fullComponentLibrary.message}
+                    </p>
+                  </div>
+                  
+                  <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-4">
+                    <div className="flex items-center space-x-2 mb-2">
+                      <FileText className="w-5 h-5 text-amber-500" />
+                      <h4 className="font-bold text-dark-900">Advanced Documentation</h4>
+                      <span className="px-2 py-0.5 bg-amber-500/20 text-amber-600 rounded-full text-xs font-medium">In Progress</span>
+                    </div>
+                    <p className="text-dark-600 text-sm">
+                      {featureStatus.advancedDocumentation.message}
+                    </p>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="space-y-6">
+                <h3 className="text-xl font-bold text-dark-900 flex items-center space-x-2">
+                  <Calendar className="w-5 h-5 text-blue-500" />
+                  <span>Coming Soon</span>
+                </h3>
+                
+                <div className="space-y-4">
+                  <div className="bg-blue-500/10 border border-blue-500/30 rounded-xl p-4">
+                    <div className="flex items-center space-x-2 mb-2">
+                      <GitBranch className="w-5 h-5 text-blue-500" />
+                      <h4 className="font-bold text-dark-900">Git Integration</h4>
+                      <span className="px-2 py-0.5 bg-blue-500/20 text-blue-600 rounded-full text-xs font-medium">Coming Soon</span>
+                    </div>
+                    <p className="text-dark-600 text-sm">
+                      {featureStatus.gitIntegration.message}
+                    </p>
+                  </div>
+                  
+                  <div className="bg-gray-500/10 border border-gray-500/30 rounded-xl p-4">
+                    <div className="flex items-center space-x-2 mb-2">
+                      <Users className="w-5 h-5 text-gray-500" />
+                      <h4 className="font-bold text-dark-900">Team Collaboration</h4>
+                      <span className="px-2 py-0.5 bg-gray-500/20 text-gray-600 rounded-full text-xs font-medium">Planned</span>
+                    </div>
+                    <p className="text-dark-600 text-sm">
+                      {featureStatus.teamCollaboration.message}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
 
           {/* Value Proposition */}
@@ -375,7 +561,7 @@ export const PricingPage: React.FC<PricingPageProps> = ({ onSelectPlan, onBack }
               </p>
               <div className="flex flex-col sm:flex-row items-center justify-center space-y-4 sm:space-y-0 sm:space-x-6">
                 <button
-                  onClick={() => onSelectPlan('free')}
+                  onClick={() => onSelectPlan('explorer')}
                   className="group relative overflow-hidden bg-gradient-to-r from-emerald-500 via-teal-600 to-cyan-700 hover:from-emerald-600 hover:via-teal-700 hover:to-cyan-800 text-white px-12 py-6 rounded-2xl font-black text-xl transition-all duration-300 transform hover:scale-110 shadow-2xl hover:shadow-3xl"
                 >
                   <div className="relative flex items-center space-x-3">
@@ -385,12 +571,12 @@ export const PricingPage: React.FC<PricingPageProps> = ({ onSelectPlan, onBack }
                   </div>
                 </button>
                 <button
-                  onClick={() => onSelectPlan('pro')}
+                  onClick={() => onSelectPlan('team-pro')}
                   className="group relative overflow-hidden bg-gradient-to-r from-primary-500 via-primary-600 to-primary-700 hover:from-primary-600 hover:via-primary-700 hover:to-primary-800 text-white px-12 py-6 rounded-2xl font-black text-xl transition-all duration-300 transform hover:scale-110 shadow-2xl hover:shadow-3xl"
                 >
                   <div className="relative flex items-center space-x-3">
                     <Rocket className="w-6 h-6" />
-                    <span>Try Visionary - 14 Days Free</span>
+                    <span>Try Team Pro - 7 Days Free</span>
                     <ArrowRight className="w-6 h-6 group-hover:translate-x-2 transition-transform duration-300" />
                   </div>
                 </button>
@@ -401,5 +587,75 @@ export const PricingPage: React.FC<PricingPageProps> = ({ onSelectPlan, onBack }
         </div>
       </div>
     </div>
+  );
+};
+
+// Add missing icon component
+const FileText = (props: any) => {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      {...props}
+    >
+      <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" />
+      <polyline points="14 2 14 8 20 8" />
+      <line x1="16" y1="13" x2="8" y2="13" />
+      <line x1="16" y1="17" x2="8" y2="17" />
+      <line x1="10" y1="9" x2="8" y2="9" />
+    </svg>
+  );
+};
+
+// Add missing icon component
+const GitBranch = (props: any) => {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      {...props}
+    >
+      <line x1="6" y1="3" x2="6" y2="15" />
+      <circle cx="18" cy="6" r="3" />
+      <circle cx="6" cy="18" r="3" />
+      <path d="M18 9a9 9 0 0 1-9 9" />
+    </svg>
+  );
+};
+
+// Add missing icon component
+const Calendar = (props: any) => {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      {...props}
+    >
+      <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+      <line x1="16" y1="2" x2="16" y2="6" />
+      <line x1="8" y1="2" x2="8" y2="6" />
+      <line x1="3" y1="10" x2="21" y2="10" />
+    </svg>
   );
 };
