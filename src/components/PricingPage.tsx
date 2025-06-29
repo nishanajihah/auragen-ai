@@ -4,7 +4,7 @@ import {
   Sparkles, ArrowRight, Star, Gift, Rocket, Heart,
   Coffee, TrendingUp, Shield, Target, Lightbulb,
   DollarSign, Flame, Diamond, Trophy, ArrowLeft,
-  Clock, AlertTriangle, HelpCircle, Info
+  Clock, AlertTriangle, HelpCircle, Info, Layers
 } from 'lucide-react';
 
 interface PricingPageProps {
