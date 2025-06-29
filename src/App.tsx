@@ -1,56 +1,59 @@
 import React, { useState, useEffect } from 'react';
-import { Header } from './components/Header';
+import { Layout } from './components/Layout';
 import { ConversationView } from './components/ConversationView';
 import { MoodboardView } from './components/MoodboardView';
 import { ProjectManager } from './components/ProjectManager';
 import { FontSelectionModal } from './components/FontSelectionModal';
 import { SaveProjectModal } from './components/SaveProjectModal';
 import { AuthModal } from './components/AuthModal';
-import { PremiumModal } from './components/PremiumModal';
 import { ExportModal } from './components/ExportModal';
-import { NotificationContainer } from './components/NotificationContainer';
-import { UsageIndicator } from './components/UsageIndicator';
+import { SettingsPage } from './components/SettingsPage';
 import { VoiceControls } from './components/VoiceControls';
 import { LandingPage } from './components/LandingPage';
 import { PricingPage } from './components/PricingPage';
 import { ErrorPage, NotFoundPage, ServerErrorPage } from './components/ErrorPage';
+import { ProjectIndicator } from './components/ProjectIndicator';
+import { MobileNavigation } from './components/MobileNavigation';
+import { GoogleFontsProvider } from './components/GoogleFontsProvider';
+import { RevenueCatProvider, useRevenueCat } from './components/RevenueCatProvider';
+import { UsageDashboard } from './components/UsageDashboard';
 import { Message, MoodboardData, ProjectData, FontSelectionRequest } from './types';
-import { generateAuraResponse, resetConversation } from './services/mockApi';
+import { generateAuraResponse, handleRegenerateSection, resetConversation } from './services/mockApi';
 import { speakAuraResponse } from './services/elevenlabs';
-import { checkFeatureAccess, incrementUsage } from './services/revenuecat';
-import { checkPremiumStatus } from './services/revenuecat';
 import { useAuth } from './hooks/useAuth';
 import { analytics } from './services/analytics';
 import { notifications } from './services/notifications';
-import { checkFeatureAccess as checkFeatureAccessHelper } from './utils/helpers';
+import { getUserPlanLimits, checkUsageLimit, getGeminiModel, canUseVoice } from './utils/planRestrictions';
 import { VOICE_SETTINGS } from './utils/constants';
+import { getEnvironmentInfo } from './services/gemini';
 
 type ViewMode = 'conversation' | 'moodboard';
-type AppMode = 'landing' | 'pricing' | 'app' | 'error';
+type AppMode = 'landing' | 'pricing' | 'app' | 'settings' | 'usage' | 'error';
 
-function App() {
+function AppContent() {
   const { user, loading: authLoading } = useAuth();
+  const { isPremium, initializeRevenueCat } = useRevenueCat();
   const [appMode, setAppMode] = useState<AppMode>('landing');
   const [errorType, setErrorType] = useState<'404' | '500' | '403' | 'maintenance'>('404');
-  const [darkMode, setDarkMode] = useState(true);
+  const [darkMode, setDarkMode] = useState(() => {
+    const saved = localStorage.getItem('auragen-theme');
+    return saved ? saved === 'dark' : true;
+  });
   const [messages, setMessages] = useState<Message[]>([]);
   const [moodboard, setMoodboard] = useState<MoodboardData | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [viewMode, setViewMode] = useState<ViewMode>('conversation');
-  const [currentProject, setCurrentProject] = useState<string>('');
-  const [isPremium, setIsPremium] = useState(false);
+  const [currentProject, setCurrentProject] = useState<string>('Nebula Bloom');
   
   // Modal states
   const [showProjectManager, setShowProjectManager] = useState(false);
   const [showSaveModal, setShowSaveModal] = useState(false);
   const [showFontModal, setShowFontModal] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
-  const [showPremiumModal, setShowPremiumModal] = useState(false);
   const [showExportModal, setShowExportModal] = useState(false);
   
   // Modal data
   const [authMode, setAuthMode] = useState<'signin' | 'signup'>('signin');
-  const [premiumContext, setPremiumContext] = useState<{feature?: string, limit?: number}>({});
   const [fontModalData, setFontModalData] = useState<{
     currentFont: string;
     fontType: 'heading' | 'body';
@@ -60,23 +63,70 @@ function App() {
   const [voiceEnabled, setVoiceEnabled] = useState(true);
   const [currentVoice, setCurrentVoice] = useState(VOICE_SETTINGS.DEFAULT_VOICE_ID);
 
-  useEffect(() => {
-    if (darkMode) {
-      document.documentElement.classList.add('dark');
-      document.body.classList.remove('light');
-    } else {
-      document.documentElement.classList.remove('dark');
-      document.body.classList.add('light');
+  // Settings
+  const [userSettings, setUserSettings] = useState({
+    displayName: '',
+    notifications: {
+      email: true,
+      browser: true,
+      marketing: false
+    },
+    preferences: {
+      autoSave: true,
+      voiceResponses: true,
+      animationsEnabled: true,
+      compactMode: false
+    },
+    fonts: {
+      heading: 'Inter',
+      body: 'Inter',
+      size: 'medium'
     }
+  });
+
+  // Theme persistence
+  useEffect(() => {
+    const root = document.documentElement;
+    const body = document.body;
+    
+    if (darkMode) {
+      root.classList.add('dark');
+      root.classList.remove('light');
+      body.classList.remove('light');
+    } else {
+      root.classList.remove('dark');
+      root.classList.add('light');
+      body.classList.add('light');
+    }
+    
+    localStorage.setItem('auragen-theme', darkMode ? 'dark' : 'light');
   }, [darkMode]);
+
+  useEffect(() => {
+    // Log environment info on startup
+    const envInfo = getEnvironmentInfo();
+    console.log('AuraGen AI Environment:', envInfo);
+    
+    if (!envInfo.hasApiKey) {
+      notifications.warning(
+        'API Configuration',
+        'Gemini AI key not configured. Please add your API key to the environment variables.'
+      );
+    }
+  }, []);
 
   useEffect(() => {
     if (user) {
       console.log('User logged in:', user);
       analytics.setUserId(user.id);
-      checkPremiumStatus().then(setIsPremium);
+      initializeRevenueCat(user.id);
       
-      // FIXED: Auto-redirect to app after successful login
+      // Load user settings
+      const savedSettings = localStorage.getItem(`auragen-settings-${user.id}`);
+      if (savedSettings) {
+        setUserSettings(JSON.parse(savedSettings));
+      }
+      
       if (appMode === 'landing' || appMode === 'pricing') {
         console.log('Redirecting to app...');
         setAppMode('app');
@@ -84,19 +134,11 @@ function App() {
       }
     } else {
       console.log('User logged out');
-      // Only redirect to landing if we're currently in the app
-      if (appMode === 'app') {
+      if (appMode === 'app' || appMode === 'settings' || appMode === 'usage') {
         setAppMode('landing');
       }
     }
-  }, [user, appMode]);
-
-  useEffect(() => {
-    // Listen for premium modal trigger
-    const handleShowPremiumModal = () => setShowPremiumModal(true);
-    window.addEventListener('show-premium-modal', handleShowPremiumModal);
-    return () => window.removeEventListener('show-premium-modal', handleShowPremiumModal);
-  }, []);
+  }, [user, appMode, initializeRevenueCat]);
 
   const toggleDarkMode = () => {
     setDarkMode(!darkMode);
@@ -132,19 +174,17 @@ function App() {
         setShowAuthModal(true);
       }
     } else {
-      // For paid plans, show premium modal
-      setShowPremiumModal(true);
+      // Navigate to pricing page instead of showing modal
+      setAppMode('pricing');
     }
   };
 
-  // Function to show error pages (for testing)
   const showErrorPage = (type: '404' | '500' | '403' | 'maintenance') => {
     setErrorType(type);
     setAppMode('error');
   };
 
   const handleSendMessage = async (content: string) => {
-    // Check if user is authenticated - REDIRECT TO LOGIN FOR SAFETY
     if (!user) {
       setAuthMode('signup');
       setShowAuthModal(true);
@@ -152,15 +192,17 @@ function App() {
       return;
     }
 
-    // Check generation limits
-    const accessCheck = checkFeatureAccessHelper('generation', isPremium, user.id);
-    if (!accessCheck.allowed) {
-      setPremiumContext({ 
-        feature: 'generation', 
-        limit: accessCheck.limit 
-      });
-      setShowPremiumModal(true);
-      notifications.limitReached('generation', accessCheck.limit || 0);
+    // Check usage limits based on plan
+    const planLimits = getUserPlanLimits(user);
+    const mockUsageData = { generations: 3 }; // In real app, get from API
+    const usageCheck = checkUsageLimit('generations', mockUsageData.generations, user);
+    
+    if (!usageCheck.allowed) {
+      notifications.warning(
+        'Usage Limit Reached', 
+        `You've reached your daily limit of ${usageCheck.limit} generations. Upgrade to Premium for unlimited access.`
+      );
+      setAppMode('pricing');
       return;
     }
 
@@ -175,7 +217,9 @@ function App() {
     setIsLoading(true);
 
     try {
-      const response = await generateAuraResponse(content);
+      // Use appropriate Gemini model based on plan
+      const model = getGeminiModel(user);
+      const response = await generateAuraResponse(content, user.id, isPremium);
       
       const aiMessage: Message = {
         id: (Date.now() + 1).toString(),
@@ -186,19 +230,22 @@ function App() {
 
       setMessages(prev => [...prev, aiMessage]);
       
-      // Increment usage for tracking
-      incrementUsage('generation', user.id);
       analytics.trackGeneration(content, true);
       
-      // Speak the AI response if voice is enabled
-      if (voiceEnabled) {
+      // Check if voice is enabled for user's plan
+      if (voiceEnabled && userSettings.preferences.voiceResponses && canUseVoice(user)) {
         await speakAuraResponse(response.message, currentVoice);
       }
       
       if (response.moodboard) {
         setMoodboard(response.moodboard);
-        notifications.generationSuccess();
+        notifications.success('Design Generated!', 'Your AI-powered design system is ready to explore.');
         setTimeout(() => setViewMode('moodboard'), 1000);
+        
+        // Auto-save if enabled
+        if (userSettings.preferences.autoSave) {
+          // TODO: Implement auto-save
+        }
       }
     } catch (error) {
       console.error('Error generating response:', error);
@@ -206,12 +253,12 @@ function App() {
       
       const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
-        content: "I apologize, but I'm having trouble processing your request right now. Please try again in a moment.",
+        content: "I apologize, but I'm having trouble processing your request right now. Please check your internet connection and try again.",
         sender: 'ai',
         timestamp: new Date()
       };
       setMessages(prev => [...prev, errorMessage]);
-      notifications.error('Generation Failed', 'Please try again in a moment.');
+      notifications.error('Generation Failed', 'Please check your connection and try again.');
     } finally {
       setIsLoading(false);
     }
@@ -221,7 +268,7 @@ function App() {
     setMessages([]);
     setMoodboard(null);
     setViewMode('conversation');
-    setCurrentProject('');
+    setCurrentProject('Nebula Bloom');
     resetConversation();
     analytics.trackFeatureUsage('new_conversation');
   };
@@ -234,15 +281,17 @@ function App() {
       return;
     }
 
-    // Check generation limits for regeneration
-    const accessCheck = checkFeatureAccessHelper('generation', isPremium, user.id);
-    if (!accessCheck.allowed) {
-      setPremiumContext({ 
-        feature: 'generation', 
-        limit: accessCheck.limit 
-      });
-      setShowPremiumModal(true);
-      notifications.limitReached('generation', accessCheck.limit || 0);
+    // Check usage limits based on plan
+    const planLimits = getUserPlanLimits(user);
+    const mockUsageData = { generations: 3 }; // In real app, get from API
+    const usageCheck = checkUsageLimit('generations', mockUsageData.generations, user);
+    
+    if (!usageCheck.allowed) {
+      notifications.warning(
+        'Usage Limit Reached', 
+        `You've reached your daily limit of ${usageCheck.limit} generations. Upgrade to Premium for unlimited access.`
+      );
+      setAppMode('pricing');
       return;
     }
 
@@ -250,17 +299,14 @@ function App() {
     
     setIsLoading(true);
     try {
-      const response = await generateAuraResponse(`Regenerate only the ${section} for the current vibe`);
+      const response = await handleRegenerateSection(section, moodboard, `Regenerate the ${section} section`, user.id, isPremium);
       if (response.moodboard) {
         setMoodboard(response.moodboard);
       }
       
-      // Increment usage
-      incrementUsage('generation', user.id);
       analytics.trackFeatureUsage('regenerate_section', section);
       
-      // Speak the response if voice is enabled
-      if (voiceEnabled) {
+      if (voiceEnabled && userSettings.preferences.voiceResponses && canUseVoice(user)) {
         await speakAuraResponse(response.message, currentVoice);
       }
     } catch (error) {
@@ -284,15 +330,17 @@ function App() {
       return;
     }
 
-    // Check project limits
-    const accessCheck = checkFeatureAccessHelper('project', isPremium, user.id);
-    if (!accessCheck.allowed) {
-      setPremiumContext({ 
-        feature: 'project', 
-        limit: accessCheck.limit 
-      });
-      setShowPremiumModal(true);
-      notifications.limitReached('project', accessCheck.limit || 0);
+    // Check usage limits based on plan
+    const planLimits = getUserPlanLimits(user);
+    const mockUsageData = { projects: 1 }; // In real app, get from API
+    const usageCheck = checkUsageLimit('projects', mockUsageData.projects, user);
+    
+    if (!usageCheck.allowed) {
+      notifications.warning(
+        'Project Limit Reached', 
+        `You've reached your limit of ${usageCheck.limit} saved projects. Upgrade to Premium for unlimited projects.`
+      );
+      setAppMode('pricing');
       return;
     }
 
@@ -310,17 +358,14 @@ function App() {
       userId: user.id
     };
     
-    // Save to localStorage (in production, this would be Supabase)
     const savedProjects = JSON.parse(localStorage.getItem('auragen-projects') || '[]');
     savedProjects.push(project);
     localStorage.setItem('auragen-projects', JSON.stringify(savedProjects));
     
-    // Increment usage
-    incrementUsage('project', user.id);
     analytics.trackProjectSave(projectData.name, projectData.tags);
     
     setCurrentProject(projectData.name);
-    notifications.projectSaved(projectData.name);
+    notifications.success('Project Saved', `"${projectData.name}" has been saved successfully.`);
   };
 
   const handleLoadProject = (project: ProjectData) => {
@@ -360,9 +405,13 @@ function App() {
   const handleFontSelectionSubmit = async (request: FontSelectionRequest) => {
     setIsLoading(true);
     try {
-      const response = await generateAuraResponse(
+      const response = await handleRegenerateSection(
+        'fonts',
+        moodboard!,
         `Change the ${fontModalData?.fontType} font from "${request.currentFont}" because: ${request.reason}. 
-         User preferences: ${request.preferences.style} ${request.preferences.category} font with ${request.preferences.mood} mood.`
+         User preferences: ${request.preferences.style} ${request.preferences.category} font with ${request.preferences.mood} mood.`,
+        user?.id,
+        isPremium
       );
       if (response.moodboard) {
         setMoodboard(response.moodboard);
@@ -370,8 +419,7 @@ function App() {
       
       analytics.trackFeatureUsage('font_change', fontModalData?.fontType);
       
-      // Speak the response if voice is enabled
-      if (voiceEnabled) {
+      if (voiceEnabled && userSettings.preferences.voiceResponses && canUseVoice(user)) {
         await speakAuraResponse(response.message, currentVoice);
       }
     } catch (error) {
@@ -393,15 +441,17 @@ function App() {
       return;
     }
 
-    // Check export limits
-    const accessCheck = checkFeatureAccessHelper('export', isPremium, user.id);
-    if (!accessCheck.allowed) {
-      setPremiumContext({ 
-        feature: 'export', 
-        limit: accessCheck.limit 
-      });
-      setShowPremiumModal(true);
-      notifications.limitReached('export', accessCheck.limit || 0);
+    // Check usage limits based on plan
+    const planLimits = getUserPlanLimits(user);
+    const mockUsageData = { exports: 1 }; // In real app, get from API
+    const usageCheck = checkUsageLimit('exports', mockUsageData.exports, user);
+    
+    if (!usageCheck.allowed) {
+      notifications.warning(
+        'Export Limit Reached', 
+        `You've reached your daily limit of ${usageCheck.limit} exports. Upgrade to Premium for unlimited exports.`
+      );
+      setAppMode('pricing');
       return;
     }
 
@@ -409,19 +459,15 @@ function App() {
   };
 
   const handleExportComplete = () => {
-    incrementUsage('export', user.id);
+    analytics.trackFeatureUsage('export_completed');
   };
 
-  // FIXED: Better auth success handler
   const handleAuthSuccess = (userData: any) => {
     console.log('Auth success, user data:', userData);
     analytics.trackSignIn('email');
     
-    // Close the auth modal first
     setShowAuthModal(false);
     
-    // The useEffect will handle the redirect when user state updates
-    // But we can also manually trigger it here for immediate feedback
     setTimeout(() => {
       setAppMode('app');
       notifications.success('Welcome!', 'You\'re now signed in to AuraGen AI.');
@@ -429,23 +475,37 @@ function App() {
   };
 
   const handlePremiumSuccess = () => {
-    setIsPremium(true);
     analytics.trackPremiumUpgrade('monthly');
     notifications.success('Premium Activated!', 'You now have unlimited access to all features.');
+  };
+
+  const handleOpenSettings = () => {
+    setAppMode('settings');
+  };
+
+  const handleOpenUsageDashboard = () => {
+    setAppMode('usage');
+  };
+
+  const handleSaveSettings = (settings: any) => {
+    setUserSettings(settings);
+    if (user) {
+      localStorage.setItem(`auragen-settings-${user.id}`, JSON.stringify(settings));
+    }
+    notifications.success('Settings Saved', 'Your preferences have been updated.');
   };
 
   if (authLoading) {
     return (
       <div className="min-h-screen welcome-gradient flex items-center justify-center">
         <div className="text-center">
-          <div className="w-16 h-16 border-4 border-primary-500/30 border-t-primary-500 rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-dark-600">Loading AuraGen AI...</p>
+          <div className="w-12 h-12 sm:w-16 sm:h-16 border-4 border-primary-500/30 border-t-primary-500 rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-dark-600 text-sm sm:text-base">Loading AuraGen AI...</p>
         </div>
       </div>
     );
   }
 
-  // Show error page
   if (appMode === 'error') {
     const errorProps = {
       onGoHome: () => setAppMode('landing')
@@ -479,7 +539,6 @@ function App() {
     }
   }
 
-  // Show landing page
   if (appMode === 'landing') {
     return (
       <>
@@ -489,42 +548,16 @@ function App() {
           onViewPricing={handleViewPricing}
         />
         
-        {/* Auth Modal */}
         <AuthModal
           isOpen={showAuthModal}
           onClose={() => setShowAuthModal(false)}
           onSuccess={handleAuthSuccess}
           mode={authMode}
         />
-        
-        <NotificationContainer />
-
-        {/* Hidden buttons for testing error pages */}
-        <div className="fixed bottom-4 right-4 space-y-2 z-50">
-          <button
-            onClick={() => showErrorPage('404')}
-            className="block bg-red-500 text-white px-3 py-1 rounded text-xs"
-          >
-            Test 404
-          </button>
-          <button
-            onClick={() => showErrorPage('500')}
-            className="block bg-red-600 text-white px-3 py-1 rounded text-xs"
-          >
-            Test 500
-          </button>
-          <button
-            onClick={() => showErrorPage('403')}
-            className="block bg-orange-500 text-white px-3 py-1 rounded text-xs"
-          >
-            Test 403
-          </button>
-        </div>
       </>
     );
   }
 
-  // Show pricing page
   if (appMode === 'pricing') {
     return (
       <>
@@ -533,32 +566,75 @@ function App() {
           onBack={() => setAppMode('landing')}
         />
         
-        {/* Auth Modal */}
         <AuthModal
           isOpen={showAuthModal}
           onClose={() => setShowAuthModal(false)}
           onSuccess={handleAuthSuccess}
           mode={authMode}
         />
-        
-        {/* Premium Modal */}
-        <PremiumModal
-          isOpen={showPremiumModal}
-          onClose={() => setShowPremiumModal(false)}
-          onSuccess={handlePremiumSuccess}
-          feature={premiumContext.feature}
-          limit={premiumContext.limit}
-        />
-        
-        <NotificationContainer />
       </>
     );
   }
 
-  // FIXED: Only show app if user is authenticated
+  if (appMode === 'settings') {
+    return (
+      <Layout
+        darkMode={darkMode}
+        toggleDarkMode={toggleDarkMode}
+        user={user}
+        isPremium={isPremium}
+        showHeader={false}
+      >
+        <SettingsPage
+          user={user}
+          isPremium={isPremium}
+          onBack={() => setAppMode('app')}
+          onSave={handleSaveSettings}
+          darkMode={darkMode}
+          toggleDarkMode={toggleDarkMode}
+        />
+      </Layout>
+    );
+  }
+
+  if (appMode === 'usage') {
+    return (
+      <Layout
+        darkMode={darkMode}
+        toggleDarkMode={toggleDarkMode}
+        user={user}
+        isPremium={isPremium}
+        showHeader={true}
+        onOpenSettings={handleOpenSettings}
+        onAuthClick={(mode) => {
+          setAuthMode(mode);
+          setShowAuthModal(true);
+        }}
+      >
+        <div className="py-8">
+          <ResponsiveContainer>
+            <div className="flex items-center space-x-3 mb-6">
+              <button
+                onClick={() => setAppMode('app')}
+                className="p-2 rounded-lg hover:bg-dark-200/50 transition-colors border border-dark-300/30"
+              >
+                <ArrowLeft className="w-5 h-5 text-dark-600" />
+              </button>
+              <h1 className="text-2xl font-bold text-dark-900">Usage Dashboard</h1>
+            </div>
+            
+            <UsageDashboard 
+              user={user} 
+              onUpgradeClick={() => setAppMode('pricing')} 
+            />
+          </ResponsiveContainer>
+        </div>
+      </Layout>
+    );
+  }
+
   if (!user) {
     console.log('No user, redirecting to landing...');
-    // If somehow we're in app mode without a user, redirect to landing
     if (appMode === 'app') {
       setAppMode('landing');
     }
@@ -576,91 +652,97 @@ function App() {
           onSuccess={handleAuthSuccess}
           mode={authMode}
         />
-        
-        <NotificationContainer />
       </>
     );
   }
 
-  // Show main app - CENTERED AND PROPERLY ALIGNED
   console.log('Showing main app for user:', user);
   return (
-    <div className={`min-h-screen welcome-gradient ${!darkMode ? 'light' : ''} transition-all duration-700`}>
-      <Header 
-        darkMode={darkMode} 
-        toggleDarkMode={toggleDarkMode}
-        viewMode={viewMode}
-        setViewMode={setViewMode}
-        hasMoodboard={!!moodboard}
-        user={user}
-        onAuthClick={(mode) => {
-          setAuthMode(mode);
-          setShowAuthModal(true);
-        }}
-        voiceControls={
-          <VoiceControls
-            isEnabled={voiceEnabled}
-            onToggle={setVoiceEnabled}
-            currentVoice={currentVoice}
-            onVoiceChange={setCurrentVoice}
+    <Layout
+      darkMode={darkMode}
+      toggleDarkMode={toggleDarkMode}
+      viewMode={viewMode}
+      setViewMode={setViewMode}
+      hasMoodboard={!!moodboard}
+      user={user}
+      onAuthClick={(mode) => {
+        setAuthMode(mode);
+        setShowAuthModal(true);
+      }}
+      onOpenSettings={handleOpenSettings}
+      onOpenProjectManager={() => setShowProjectManager(true)}
+      isPremium={isPremium}
+      onShowUsageDashboard={handleOpenUsageDashboard}
+      voiceControls={
+        <VoiceControls
+          isEnabled={voiceEnabled}
+          onToggle={setVoiceEnabled}
+          currentVoice={currentVoice}
+          onVoiceChange={setCurrentVoice}
+        />
+      }
+    >
+      <div className="py-4 sm:py-6">
+        {/* Project Indicator - Mobile Responsive */}
+        {moodboard && (
+          <div className="mb-4 sm:mb-6">
+            <ProjectIndicator
+              projectName={currentProject || 'Untitled Project'}
+              vibeSummary={moodboard.vibeSummary}
+              onOpenProjectManager={() => setShowProjectManager(true)}
+              className="sm:max-w-md"
+            />
+          </div>
+        )}
+
+        {/* Main Content */}
+        {viewMode === 'conversation' ? (
+          <ConversationView
+            messages={messages}
+            onSendMessage={handleSendMessage}
+            isLoading={isLoading}
+            darkMode={darkMode}
+            hasMoodboard={!!moodboard}
+            onViewMoodboard={() => setViewMode('moodboard')}
+            user={user}
           />
-        }
-      />
-      
-      {/* CENTERED MAIN CONTENT */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-          {/* Main Content - Centered */}
-          <div className="lg:col-span-3">
-            {viewMode === 'conversation' ? (
-              <ConversationView
-                messages={messages}
-                onSendMessage={handleSendMessage}
-                isLoading={isLoading}
-                darkMode={darkMode}
-                hasMoodboard={!!moodboard}
-                onViewMoodboard={() => setViewMode('moodboard')}
-                user={user}
-              />
-            ) : (
-              <MoodboardView
-                moodboard={moodboard}
-                darkMode={darkMode}
-                onRegenerateSection={handleRegenerateSection}
-                isLoading={isLoading}
-                onBackToChat={() => setViewMode('conversation')}
-                projectName={currentProject || 'Untitled Project'}
-                onFontSelection={handleFontSelection}
-                onOpenProjectManager={() => setShowProjectManager(true)}
-                onExport={handleExport}
-              />
-            )}
-          </div>
+        ) : (
+          <MoodboardView
+            moodboard={moodboard}
+            darkMode={darkMode}
+            onRegenerateSection={handleRegenerateSection}
+            isLoading={isLoading}
+            onBackToChat={() => setViewMode('conversation')}
+            projectName={currentProject || 'Untitled Project'}
+            onFontSelection={handleFontSelection}
+            onOpenProjectManager={() => setShowProjectManager(true)}
+            onExport={handleExport}
+          />
+        )}
 
-          {/* Sidebar */}
-          <div className="lg:col-span-1 space-y-6">
-            {user && (
-              <UsageIndicator
-                user={user}
-                isPremium={isPremium}
-                onUpgradeClick={() => setShowPremiumModal(true)}
-              />
-            )}
-          </div>
-        </div>
-      </main>
+        {/* Mobile Navigation */}
+        <MobileNavigation
+          viewMode={viewMode}
+          setViewMode={setViewMode}
+          hasMoodboard={!!moodboard}
+          onOpenSettings={handleOpenSettings}
+          onOpenProjectManager={() => setShowProjectManager(true)}
+          user={user}
+        />
 
-      <footer className={`text-center py-8 text-sm ${darkMode ? 'text-dark-500' : 'text-gray-500'}`}>
-        <p>
-          AuraGen AI - Transform your design vision into reality •{' '}
-          <button 
-            onClick={startNewConversation}
-            className="text-primary-500 hover:text-primary-600 underline transition-colors font-semibold"
-          >
-            Start New Conversation
-          </button>
-        </p>
-      </footer>
+        {/* Footer */}
+        <footer className={`text-center py-6 text-xs sm:text-sm mt-12 ${darkMode ? 'text-dark-500' : 'text-gray-500'}`}>
+          <p>
+            AuraGen AI - Transform your design vision into reality •{' '}
+            <button 
+              onClick={startNewConversation}
+              className="text-primary-500 hover:text-primary-600 underline transition-colors font-semibold"
+            >
+              Start New Conversation
+            </button>
+          </p>
+        </footer>
+      </div>
 
       {/* Modals */}
       <ProjectManager
@@ -693,14 +775,6 @@ function App() {
         mode={authMode}
       />
 
-      <PremiumModal
-        isOpen={showPremiumModal}
-        onClose={() => setShowPremiumModal(false)}
-        onSuccess={handlePremiumSuccess}
-        feature={premiumContext.feature}
-        limit={premiumContext.limit}
-      />
-
       <ExportModal
         isOpen={showExportModal}
         onClose={() => setShowExportModal(false)}
@@ -721,10 +795,17 @@ function App() {
           fontType={fontModalData.fontType}
         />
       )}
+    </Layout>
+  );
+}
 
-      {/* Notification Container */}
-      <NotificationContainer />
-    </div>
+function App() {
+  return (
+    <GoogleFontsProvider>
+      <RevenueCatProvider>
+        <AppContent />
+      </RevenueCatProvider>
+    </GoogleFontsProvider>
   );
 }
 

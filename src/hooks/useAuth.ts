@@ -1,33 +1,37 @@
 import { useState, useEffect } from 'react';
-import { supabase, getCurrentUser } from '../services/supabase';
-import { initializeRevenueCat } from '../services/revenuecat';
+import { User } from '@supabase/supabase-js';
+import { supabase, isSupabaseConfigured } from '../services/supabase';
 
 export const useAuth = () => {
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Get initial user
-    getCurrentUser().then((user) => {
-      setUser(user);
-      if (user) {
-        initializeRevenueCat(user.id);
-      }
+    // If Supabase is not configured, set loading to false and return
+    if (!isSupabaseConfigured()) {
       setLoading(false);
-    });
+      return;
+    }
+
+    // Get initial session
+    const getInitialSession = async () => {
+      try {
+        const { data: { session } } = await supabase!.auth.getSession();
+        setUser(session?.user ?? null);
+      } catch (error) {
+        console.error('Error getting initial session:', error);
+        setUser(null);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    getInitialSession();
 
     // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+    const { data: { subscription } } = supabase!.auth.onAuthStateChange(
       async (event, session) => {
-        console.log('Auth state change:', event, session);
-        
-        if (event === 'SIGNED_IN' && session?.user) {
-          setUser(session.user);
-          await initializeRevenueCat(session.user.id);
-        } else if (event === 'SIGNED_OUT') {
-          setUser(null);
-        }
-        
+        setUser(session?.user ?? null);
         setLoading(false);
       }
     );
@@ -35,5 +39,10 @@ export const useAuth = () => {
     return () => subscription.unsubscribe();
   }, []);
 
-  return { user, loading };
+  return {
+    user,
+    loading,
+    isAuthenticated: !!user,
+    isSupabaseConfigured: isSupabaseConfigured()
+  };
 };
