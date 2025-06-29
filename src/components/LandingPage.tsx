@@ -48,36 +48,36 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onSignIn
     }
   ];
 
-  const testimonials = [
-    {
-      name: "Sarah Chen",
-      role: "UI/UX Designer",
-      avatar: "SC",
-      content: "AuraGen AI transformed my design workflow. What used to take hours now takes minutes!",
-      rating: 5
-    },
-    {
-      name: "Marcus Rodriguez",
-      role: "Frontend Developer",
-      avatar: "MR",
-      content: "The component suggestions are spot-on. It's like having a senior designer on my team.",
-      rating: 5
-    },
-    {
-      name: "Emily Watson",
-      role: "Product Manager",
-      avatar: "EW",
-      content: "Our team's design consistency improved dramatically since using AuraGen AI.",
-      rating: 5
-    }
-  ];
+  // const testimonials = [
+  //   {
+  //     name: "Sarah Chen",
+  //     role: "UI/UX Designer",
+  //     avatar: "SC",
+  //     content: "AuraGen AI transformed my design workflow. What used to take hours now takes minutes!",
+  //     rating: 5
+  //   },
+  //   {
+  //     name: "Marcus Rodriguez",
+  //     role: "Frontend Developer",
+  //     avatar: "MR",
+  //     content: "The component suggestions are spot-on. It's like having a senior designer on my team.",
+  //     rating: 5
+  //   },
+  //   {
+  //     name: "Emily Watson",
+  //     role: "Product Manager",
+  //     avatar: "EW",
+  //     content: "Our team's design consistency improved dramatically since using AuraGen AI.",
+  //     rating: 5
+  //   }
+  // ];
 
-  const stats = [
-    { number: "1,000+", label: "Design Systems Created", icon: TrendingUp },
-    { number: "50+", label: "Happy Designers", icon: Users },
-    { number: "99.9%", label: "Uptime", icon: Shield },
-    { number: "4.9/5", label: "User Rating", icon: Star }
-  ];
+  // const stats = [
+  //   { number: "1,000+", label: "Design Systems Created", icon: TrendingUp },
+  //   { number: "50+", label: "Happy Designers", icon: Users },
+  //   { number: "99.9%", label: "Uptime", icon: Shield },
+  //   { number: "4.9/5", label: "User Rating", icon: Star }
+  // ];
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-dark-50 via-dark-100 to-dark-200 overflow-hidden">
@@ -190,20 +190,6 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onSignIn
               )}
             </div>
 
-            {/* Stats */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-8 max-w-4xl mx-auto">
-              {stats.map((stat, index) => (
-                <div key={index} className="text-center group">
-                  <div className="flex items-center justify-center mb-3">
-                    <div className="p-3 rounded-full bg-primary-500/10 group-hover:bg-primary-500/20 transition-colors">
-                      <stat.icon className="w-6 h-6 text-primary-600" />
-                    </div>
-                  </div>
-                  <div className="text-3xl md:text-4xl font-bold text-primary-600 mb-2">{stat.number}</div>
-                  <div className="text-dark-600 font-medium">{stat.label}</div>
-                </div>
-              ))}
-            </div>
           </div>
         </div>
 
@@ -301,45 +287,6 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onSignIn
                 </div>
                 <h3 className="text-2xl font-bold text-dark-900 mb-4">{item.title}</h3>
                 <p className="text-dark-600 leading-relaxed">{item.description}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Testimonials */}
-      <section className="py-24 bg-dark-100/50 backdrop-blur-xl">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-20">
-            <h2 className="text-4xl md:text-5xl font-bold text-dark-900 mb-6">
-              Trusted by Designers
-              <span className="block bg-gradient-to-r from-primary-400 to-primary-600 bg-clip-text text-transparent">
-                Everywhere
-              </span>
-            </h2>
-            <p className="text-xl text-dark-600 max-w-2xl mx-auto">
-              Join the growing community of designers who are creating faster and better with AuraGen AI.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {testimonials.map((testimonial, index) => (
-              <div key={index} className="bg-dark-200/30 backdrop-blur-xl rounded-3xl p-8 border border-dark-300/30 hover:border-primary-500/50 transition-all duration-300 hover:shadow-xl">
-                <div className="flex items-center space-x-1 mb-6">
-                  {[...Array(testimonial.rating)].map((_, i) => (
-                    <Star key={i} className="w-5 h-5 text-yellow-400 fill-current" />
-                  ))}
-                </div>
-                <p className="text-dark-700 mb-6 leading-relaxed">"{testimonial.content}"</p>
-                <div className="flex items-center space-x-4">
-                  <div className="w-12 h-12 bg-gradient-to-br from-primary-500 to-primary-600 rounded-full flex items-center justify-center text-white font-bold">
-                    {testimonial.avatar}
-                  </div>
-                  <div>
-                    <div className="font-semibold text-dark-900">{testimonial.name}</div>
-                    <div className="text-dark-600 text-sm">{testimonial.role}</div>
-                  </div>
-                </div>
               </div>
             ))}
           </div>
