@@ -115,6 +115,8 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onSignIn
               >
                 Get Started Free
               </button>
+
+              <img src="/home/project/public/logotext_poweredby_360w.svg"></img>
             </div>
           </div>
         </div>
