@@ -274,11 +274,6 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onSignIn
         </div>
       </section>
 
-      {/* Testimonials Section - Lazy loaded */}
-      <Suspense fallback={<div className="py-24 text-center">Loading testimonials...</div>}>
-        {hasScrolled && <LazyTestimonials />}
-      </Suspense>
-
       {/* Footer */}
       <footer className="bg-dark-100/80 backdrop-blur-xl border-t border-dark-300/30 py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
