@@ -11,7 +11,6 @@ import { analytics } from '../services/analytics';
 // Lazy load heavy components
 const LazyFeatureSection = lazy(() => import('./LazyComponents/LazyFeatureSection').then(module => ({ default: module.default })));
 const LazyHowItWorks = lazy(() => import('./LazyComponents/LazyHowItWorks').then(module => ({ default: module.default })));
-const LazyTestimonials = lazy(() => import('./LazyComponents/LazyTestimonials').then(module => ({ default: module.default })));
 
 interface LandingPageProps {
   onGetStarted: () => void;
