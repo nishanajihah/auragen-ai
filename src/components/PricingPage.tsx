@@ -16,7 +16,7 @@ export const PricingPage: React.FC<PricingPageProps> = ({ onSelectPlan, onBack }
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly');
   const [hoveredPlan, setHoveredPlan] = useState<string | null>(null);
 
- const plans = [
+  const plans = [
     {
       id: 'explorer',
       name: 'Explorer',
@@ -37,7 +37,7 @@ export const PricingPage: React.FC<PricingPageProps> = ({ onSelectPlan, onBack }
       highlight: false,
       savings: null,
       popular: false,
-      available: true
+      available: true // Added 'available' property for consistency, assuming it's usable
     },
     {
       id: 'solo-creator',
@@ -58,8 +58,31 @@ export const PricingPage: React.FC<PricingPageProps> = ({ onSelectPlan, onBack }
       ],
       cta: 'Get Started',
       highlight: false,
-      savings: 'Save $6.88/year', // ($2.99 * 12) - $29 = $6.88
+      savings: ((2.99 * 12) - 29).toFixed(2), // Calculate yearly savings dynamically
       popular: false,
+      available: true
+    },
+    {
+      id: 'advanced-creator',
+      name: 'Advanced Creator',
+      description: 'Unlock voice AI and expanded generations for serious creative work.',
+      price: { monthly: 39, yearly: 399 },
+      badge: 'Feature Rich',
+      badgeColor: 'from-yellow-400 to-orange-500',
+      emoji: '🔥',
+      gradient: 'from-amber-400 via-orange-500 to-rose-500',
+      features: [
+        '25 AI Design System Generations daily (approx. 750/month)',
+        'Powered by Gemini 2.5 Flash Model',
+        'Voice AI for explanations (up to 100,000 characters/month)', // Explicit limit
+        'Enhanced documentation',
+        '15 active projects',
+        'Dedicated email support'
+      ],
+      cta: 'Upgrade Now',
+      highlight: true,
+      savings: ((39 * 12) - 399).toFixed(2), // Calculate yearly savings dynamically
+      popular: true,
       available: true
     },
     {
@@ -74,7 +97,7 @@ export const PricingPage: React.FC<PricingPageProps> = ({ onSelectPlan, onBack }
       features: [
         '50 AI Design System Generations daily (approx. 1,500/month)',
         'Powered by Gemini 2.5 Pro (higher quality)',
-        'Voice AI for explanations (ElevenLabs)',
+        'Voice AI for explanations (up to 500,000 characters/month)', // Explicit limit
         'Advanced documentation & guidelines',
         'Full component library output (React, Vue, etc.)',
         '25 active projects',
@@ -83,12 +106,12 @@ export const PricingPage: React.FC<PricingPageProps> = ({ onSelectPlan, onBack }
       ],
       cta: 'Start 7-Day Free Trial',
       highlight: true,
-      savings: 'Save $269/year', // ($139 * 12) - $1399 = $269
+      savings: ((139 * 12) - 1399).toFixed(2), // Calculate yearly savings dynamically
       popular: true,
       available: true
     },
     {
-      id: 'studio', // Renamed from Growth Business
+      id: 'studio',
       name: 'Studio',
       description: 'Empower your design studio with advanced AI capabilities.',
       price: { monthly: 239, yearly: 2399 },
@@ -99,7 +122,7 @@ export const PricingPage: React.FC<PricingPageProps> = ({ onSelectPlan, onBack }
       features: [
         '100 AI Design System Generations daily (approx. 3,000/month)',
         'Powered by Gemini 2.5 Pro',
-        'Voice AI for explanations (ElevenLabs)',
+        'Voice AI for explanations (ElevenLabs)', // Implies high/no practical limit in terms of feature description
         'Advanced documentation & interactive examples',
         'Full component library + theming options',
         '50 active projects',
@@ -108,24 +131,24 @@ export const PricingPage: React.FC<PricingPageProps> = ({ onSelectPlan, onBack }
       ],
       cta: 'Coming Soon',
       highlight: false,
-      savings: 'Save $469/year', // ($239 * 12) - $2399 = $469
+      savings: ((239 * 12) - 2399).toFixed(2), // Calculate yearly savings dynamically
       popular: false,
       available: false,
       inProgress: true
     },
     {
-      id: 'enterprise', // Renamed from Enterprise Elite
+      id: 'enterprise',
       name: 'Enterprise',
       description: 'Comprehensive automation for large organizations and high volume needs.',
       price: { monthly: 399, yearly: 3999 },
       badge: 'Coming Soon',
-      badgeColor: 'from-primary-500 to-primary-600',
+      badgeColor: 'from-gray-500 to-gray-600',
       emoji: '⚡',
-      gradient: 'from-primary-400 via-primary-500 to-primary-600',
+      gradient: 'from-gray-400 via-gray-500 to-gray-600',
       features: [
         '200 AI Design System Generations daily (approx. 6,000/month)',
         'Powered by Gemini 2.5 Pro',
-        'Voice AI for explanations (ElevenLabs)',
+        'Voice AI for explanations (ElevenLabs)', // Implies high/no practical limit
         'Customizable documentation templates',
         'Advanced component library + motion design tokens',
         'Unlimited active projects',
@@ -136,19 +159,19 @@ export const PricingPage: React.FC<PricingPageProps> = ({ onSelectPlan, onBack }
       ],
       cta: 'Coming Soon',
       highlight: false,
-      savings: 'Save $789/year', // ($399 * 12) - $3999 = $789
+      savings: ((399 * 12) - 3999).toFixed(2), // Calculate yearly savings dynamically
       popular: false,
       available: false,
       inProgress: true
     },
     {
-      id: 'custom-enterprise', // Keeping this name, it clearly indicates a custom solution
+      id: 'custom-enterprise',
       name: 'Custom Enterprise',
       description: 'Tailored solutions and dedicated support for large organizations with unique requirements.',
       price: { monthly: 'Custom', yearly: 'Custom' },
       badge: 'Contact Sales',
       badgeColor: 'from-purple-500 to-pink-600',
-      emoji: '👑',
+      emoji: '�',
       gradient: 'from-purple-400 via-pink-500 to-red-600',
       features: [
         'Custom AI generation quota',
