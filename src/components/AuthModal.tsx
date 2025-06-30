@@ -231,11 +231,11 @@ export const AuthModal: React.FC<AuthModalProps> = ({
       console.error('Auth error:', err);
       
       // Provide user-friendly error messages
-      if (err.message.includes('rate limit')) {
+      if (err.message && err.message.includes('rate limit')) {
         setError('Too many attempts. Please try again later.');
-      } else if (err.message.includes('credentials')) {
+      } else if (err.message && err.message.includes('credentials')) {
         setError('Invalid email or password');
-      } else if (err.message.includes('already registered')) {
+      } else if (err.message && err.message.includes('already registered')) {
         setError('This email is already registered. Please sign in instead.');
       } else {
         setError(err.message || 'An unexpected error occurred. Please try again.');

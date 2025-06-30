@@ -152,7 +152,7 @@ export const Header: React.FC<HeaderProps> = ({
                   <ChevronDown className={`w-2 sm:w-3 h-2 sm:h-3 text-dark-500 transition-transform duration-200 ${showProfileMenu ? 'rotate-180' : ''}`} />
                 </button>
 
-                {/* Enhanced Profile Dropdown */}
+                {/* Profile Dropdown */}
                 {showProfileMenu && (
                   <div className="absolute top-full right-0 mt-2 w-72 sm:w-80 bg-dark-100/95 backdrop-blur-2xl rounded-xl border border-dark-200/40 shadow-2xl p-2 z-50">
                     {/* Account Info */}
