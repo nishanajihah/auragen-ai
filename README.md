@@ -6,6 +6,14 @@ AuraGen AI is an innovative platform designed to revolutionize how designers and
 
 ---
 
+## 📺 See AuraGen AI in Action
+
+Witness the magic of AuraGen AI firsthand!
+
+[AURAGEN AI](https://auragen-ai.netlify.app/)
+
+---
+
 ## ✨ What it Does
 
 Imagine transforming design concepts into fully functional design systems in moments. AuraGen AI is your **intelligent co-pilot**, eliminating "design block" and the tedious hours of manual UI coding. Simply describe your vision, and our AI instantly generates a comprehensive, production-ready design system, complete with component libraries and even voice-guided explanations. It's the ultimate leap from idea to implementation, freeing you to focus on the core innovation of your application.
@@ -110,15 +118,3 @@ To get AuraGen AI running:
 ## 🤝 Contributing
 
 We welcome contributions! If you have ideas for improvements, bug fixes, or new features, please feel free to open an issue or submit a pull request.
-
-## 📄 License
-
-[Specify your project's license here, e.g., MIT, Apache 2.0, etc.]
-
----
-
-## 📺 See AuraGen AI in Action
-
-Witness the magic of AuraGen AI firsthand!
-
-[AURAGEN AI](https://auragen-ai.netlify.app/)
