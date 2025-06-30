@@ -35,7 +35,10 @@ export const initPerformanceMonitoring = (): void => {
   const lcpObserver = new PerformanceObserver((entryList) => {
     const entries = entryList.getEntries();
     const lastEntry = entries[entries.length - 1];
-    window.performance.measure('largest-contentful-paint', 'app-start', lastEntry.startTime.toString());
+    window.performance.measure('largest-contentful-paint', {
+      start: 'app-start',
+      end: lastEntry.startTime
+    });
     console.log('Largest Contentful Paint:', lastEntry.startTime);
   });
 
@@ -49,7 +52,10 @@ export const initPerformanceMonitoring = (): void => {
   const fidObserver = new PerformanceObserver((entryList) => {
     const entries = entryList.getEntries();
     const firstInput = entries[0];
-    window.performance.measure('first-input-delay', 'app-start', firstInput.startTime.toString());
+    window.performance.measure('first-input-delay', {
+      start: 'app-start',
+      end: firstInput.startTime
+    });
     console.log('First Input Delay:', firstInput.processingStart - firstInput.startTime);
   });
 
