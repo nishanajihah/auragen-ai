@@ -287,7 +287,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onSignIn
               </span>
             </div>
             <div className="text-dark-600 text-center md:text-right">
-              <p>&copy; {new Date().getFullYear()} AuraGen AI. All rights reserved.</p>
+              <p>copyright={`© ${new Date().getFullYear()} AuraGen AI. All rights reserved.`}</p>
               <p className="text-sm mt-1">Empowering designers with AI-powered creativity</p>
             </div>
           </div>
