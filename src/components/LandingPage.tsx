@@ -115,6 +115,10 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onSignIn
               >
                 Get Started Free
               </button>
+
+              <a href="https://www.example.com" target="_blank" rel="noopener noreferrer" class="icon-link" aria-label="Visit Example Website">
+                <img src="public/logotext_poweredby_360w.svg"></img>
+              </a>
                               
             </div>
           </div>
