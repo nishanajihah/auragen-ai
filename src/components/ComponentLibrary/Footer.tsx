@@ -27,6 +27,9 @@ export const Footer: React.FC<FooterProps> = ({
   copyright,
   className = ''
 }) => {
+  const currentYear = new Date().getFullYear();
+  const formattedCopyright = copyright ? copyright.replace(/\d{4}/, currentYear.toString()) : `© ${currentYear} All rights reserved.`;
+
   if (variant === 'simple') {
     return (
       <footer className={`bg-dark-100/80 backdrop-blur-2xl border-t border-dark-200/30 py-8 ${className}`}>
@@ -40,7 +43,7 @@ export const Footer: React.FC<FooterProps> = ({
             
             <div className="text-center md:text-right">
               {copyright && (
-                <p className="text-dark-600 text-sm">{copyright}</p>
+                <p className="text-dark-600 text-sm">{formattedCopyright}</p>
               )}
               {socialIcons && (
                 <div className="mt-2">
@@ -98,7 +101,7 @@ export const Footer: React.FC<FooterProps> = ({
         {/* Copyright */}
         {copyright && (
           <div className="border-t border-dark-200/30 mt-8 pt-8 text-center">
-            <p className="text-dark-600 text-sm">{copyright}</p>
+            <p className="text-dark-600 text-sm">{formattedCopyright}</p>
           </div>
         )}
       </div>
