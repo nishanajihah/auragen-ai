@@ -315,8 +315,13 @@ const trackFailedLoginAttempt = async (email: string) => {
       .select('id, failed_login_attempts, account_status')
       .eq('email', email);
       
-    if (userError || !users || users.length === 0) {
-      console.error('Error finding user for failed login tracking:', userError);
+    if (userError) {
+      console.error('Error querying users table for failed login tracking:', userError);
+      return;
+    }
+    
+    if (!users || users.length === 0) {
+      console.warn('User not found in public.users table for failed login tracking - this is expected for users who haven\'t completed registration');
       return;
     }
     
