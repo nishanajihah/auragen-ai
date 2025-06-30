@@ -281,39 +281,6 @@ export const PricingPage: React.FC<PricingPageProps> = ({ onSelectPlan, onBack }
             </div>
           </div>
 
-          {/* Development Status Banner */}
-          <div className="mb-10 bg-blue-500/10 border border-blue-500/30 rounded-2xl p-6 backdrop-blur-xl">
-            <div className="flex items-start space-x-4">
-              <Info className="w-6 h-6 text-blue-500 flex-shrink-0 mt-1" />
-              <div>
-                <h3 className="text-lg font-bold text-dark-900 mb-2">Development Status</h3>
-                <p className="text-dark-600 mb-4">
-                  We're actively developing additional plans and features. Currently, the Explorer, Solo Creator, and Team Pro plans are available, 
-                  with more options coming soon. Features marked with <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-amber-500/20 text-amber-600">In Progress</span> are 
-                  under active development.
-                </p>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                  <div className="flex items-center space-x-2">
-                    <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                    <span className="text-dark-700">Available Now</span>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <div className="w-3 h-3 bg-amber-500 rounded-full"></div>
-                    <span className="text-dark-700">In Progress</span>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
-                    <span className="text-dark-700">Coming Soon</span>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <div className="w-3 h-3 bg-gray-400 rounded-full"></div>
-                    <span className="text-dark-700">Planned</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
           {/* Pricing Cards */}
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-20">
             {plans.map((plan, index) => (
