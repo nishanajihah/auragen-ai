@@ -90,7 +90,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onSignIn
                     onViewPricing();
                     analytics.track('pricing_button_clicked', { location: 'landing_nav' });
                   }}
-                  className="text-dark-700 hover:text-dark-900 px-3 py-1.5 rounded-lg font-medium transition-all border border-dark-300/30 hover:border-primary-500/50 text-xs"
+                  className="text-dark-700 hover:text-dark-900 p-3 rounded-lg font-medium transition-all border border-dark-300/30 hover:border-primary-500/50 text-xs"
                 >
                   Pricing
                 </button>
@@ -101,7 +101,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onSignIn
                   onSignIn();
                   analytics.track('sign_in_button_clicked', { location: 'landing_nav' });
                 }}
-                className="text-dark-700 hover:text-dark-900 px-3 py-1.5 rounded-lg font-medium transition-all border border-dark-300/30 hover:border-primary-500/50 text-xs"
+                className="text-dark-700 hover:text-dark-900 p-3 rounded-lg font-medium transition-all border border-dark-300/30 hover:border-primary-500/50 text-xs"
               >
                 Sign In
               </button>
@@ -111,7 +111,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onSignIn
                   onGetStarted();
                   analytics.track('get_started_button_clicked', { location: 'landing_nav' });
                 }}
-                className="bg-gradient-to-r from-primary-500 to-primary-600 hover:from-primary-600 hover:to-primary-700 text-white px-3 py-1.5 rounded-lg font-medium transition-all shadow-lg hover:shadow-xl text-xs"
+                className="bg-gradient-to-r from-primary-500 to-primary-600 hover:from-primary-600 hover:to-primary-700 text-white p-3 rounded-lg font-medium transition-all shadow-lg hover:shadow-xl text-xs"
               >
                 Get Started Free
               </button>
@@ -120,6 +120,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onSignIn
         </div>
       </nav>
 
+      <div></div>
       {/* Hero Section */}
       <section className="relative pt-20 pb-32">
         <div className="absolute inset-0 bg-gradient-to-r from-primary-500/10 via-transparent to-primary-600/10"></div>

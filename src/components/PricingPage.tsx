@@ -437,82 +437,11 @@ export const PricingPage: React.FC<PricingPageProps> = ({ onSelectPlan, onBack }
             ))}
           </div>
 
-          {/* Feature Development Status */}
-          <div className="mb-16 bg-dark-200/40 backdrop-blur-xl rounded-2xl p-8 border border-dark-300/30">
-            <h2 className="text-3xl font-bold text-dark-900 mb-6 text-center">
-              Feature Development Status
-            </h2>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              <div className="space-y-6">
-                <h3 className="text-xl font-bold text-dark-900 flex items-center space-x-2">
-                  <Rocket className="w-5 h-5 text-primary-500" />
-                  <span>In Progress Features</span>
-                </h3>
-                
-                <div className="space-y-4">
-                  <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-4">
-                    <div className="flex items-center space-x-2 mb-2">
-                      <Layers className="w-5 h-5 text-amber-500" />
-                      <h4 className="font-bold text-dark-900">Full Component Library</h4>
-                      <span className="px-2 py-0.5 bg-amber-500/20 text-amber-600 rounded-full text-xs font-medium">In Progress</span>
-                    </div>
-                    <p className="text-dark-600 text-sm">
-                      {featureStatus.fullComponentLibrary.message}
-                    </p>
-                  </div>
-                  
-                  <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-4">
-                    <div className="flex items-center space-x-2 mb-2">
-                      <FileText className="w-5 h-5 text-amber-500" />
-                      <h4 className="font-bold text-dark-900">Advanced Documentation</h4>
-                      <span className="px-2 py-0.5 bg-amber-500/20 text-amber-600 rounded-full text-xs font-medium">In Progress</span>
-                    </div>
-                    <p className="text-dark-600 text-sm">
-                      {featureStatus.advancedDocumentation.message}
-                    </p>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="space-y-6">
-                <h3 className="text-xl font-bold text-dark-900 flex items-center space-x-2">
-                  <Calendar className="w-5 h-5 text-blue-500" />
-                  <span>Coming Soon</span>
-                </h3>
-                
-                <div className="space-y-4">
-                  <div className="bg-blue-500/10 border border-blue-500/30 rounded-xl p-4">
-                    <div className="flex items-center space-x-2 mb-2">
-                      <GitBranch className="w-5 h-5 text-blue-500" />
-                      <h4 className="font-bold text-dark-900">Git Integration</h4>
-                      <span className="px-2 py-0.5 bg-blue-500/20 text-blue-600 rounded-full text-xs font-medium">Coming Soon</span>
-                    </div>
-                    <p className="text-dark-600 text-sm">
-                      {featureStatus.gitIntegration.message}
-                    </p>
-                  </div>
-                  
-                  <div className="bg-gray-500/10 border border-gray-500/30 rounded-xl p-4">
-                    <div className="flex items-center space-x-2 mb-2">
-                      <Users className="w-5 h-5 text-gray-500" />
-                      <h4 className="font-bold text-dark-900">Team Collaboration</h4>
-                      <span className="px-2 py-0.5 bg-gray-500/20 text-gray-600 rounded-full text-xs font-medium">Planned</span>
-                    </div>
-                    <p className="text-dark-600 text-sm">
-                      {featureStatus.teamCollaboration.message}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
           {/* Value Proposition */}
           <div className="text-center mb-16">
             <div className="bg-gradient-to-br from-primary-500/10 via-primary-600/15 to-primary-700/10 border-2 border-primary-500/30 rounded-4xl p-12 backdrop-blur-2xl shadow-3xl">
               <h2 className="text-4xl font-black text-dark-900 mb-6">
-                Why Designers Choose AuraGen AI 💖
+                Why Choose AuraGen AI 💖
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                 <div className="text-center">
