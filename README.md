@@ -121,4 +121,4 @@ We welcome contributions! If you have ideas for improvements, bug fixes, or new 
 
 Witness the magic of AuraGen AI firsthand!
 
-[AURAGEN AI](auragen-ai.netlify.app)
+[AURAGEN AI](https://auragen-ai.netlify.app/)
