@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { X, Mail, Lock, User, Sparkles, Crown, Eye, EyeOff, AlertTriangle, Check, Info, Loader2 } from 'lucide-react';
 import { Formik, Form, Field, ErrorMessage } from 'formik';
 import * as Yup from 'yup';
@@ -84,6 +84,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   const [resetSent, setResetSent] = useState(false);
   const [step, setStep] = useState<'credentials' | 'mfa' | 'complete'>('credentials');
   const [mfaCode, setMfaCode] = useState('');
+  const modalRef = useRef<HTMLDivElement>(null);
 
   // Reset form when modal opens/closes or mode changes
   useEffect(() => {
@@ -95,6 +96,41 @@ export const AuthModal: React.FC<AuthModalProps> = ({
       setMfaCode('');
     }
   }, [isOpen, initialMode]);
+
+  // Trap focus within modal for accessibility
+  useEffect(() => {
+    if (!isOpen || !modalRef.current) return;
+    
+    const focusableElements = modalRef.current.querySelectorAll(
+      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+    );
+    
+    const firstElement = focusableElements[0] as HTMLElement;
+    const lastElement = focusableElements[focusableElements.length - 1] as HTMLElement;
+    
+    const handleTabKey = (e: KeyboardEvent) => {
+      if (e.key === 'Tab') {
+        if (e.shiftKey) {
+          if (document.activeElement === firstElement) {
+            lastElement.focus();
+            e.preventDefault();
+          }
+        } else {
+          if (document.activeElement === lastElement) {
+            firstElement.focus();
+            e.preventDefault();
+          }
+        }
+      }
+    };
+    
+    document.addEventListener('keydown', handleTabKey);
+    firstElement?.focus();
+    
+    return () => {
+      document.removeEventListener('keydown', handleTabKey);
+    };
+  }, [isOpen, mode, resetSent]);
 
   // Validation schemas
   const SignInSchema = Yup.object().shape({
@@ -178,7 +214,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
       if (result?.error) {
         throw result.error;
       } else if (result?.data?.user) {
-        // FIXED: Create a proper user object and call onSuccess
+        // Create a proper user object and call onSuccess
         const userData = {
           id: result.data.user.id,
           email: result.data.user.email,
@@ -213,7 +249,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="bg-dark-100/95 backdrop-blur-2xl rounded-3xl border-2 border-dark-200/40 shadow-2xl max-w-md w-full max-h-[90vh] overflow-y-auto">
+      <div ref={modalRef} className="bg-dark-100/95 backdrop-blur-2xl rounded-3xl border-2 border-dark-200/40 shadow-2xl max-w-md w-full max-h-[90vh] overflow-y-auto">
         {/* Header */}
         <div className="p-6 border-b border-dark-200/30 sticky top-0 z-10 bg-dark-100/95 backdrop-blur-2xl">
           <div className="flex items-center justify-between">
@@ -237,6 +273,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
             <button
               onClick={onClose}
               className="p-2 rounded-xl hover:bg-dark-200/50 transition-colors"
+              aria-label="Close"
             >
               <X className="w-5 h-5 text-dark-600" />
             </button>
@@ -344,6 +381,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                           type="button"
                           onClick={() => setShowPassword(!showPassword)}
                           className="absolute right-3 top-1/2 transform -translate-y-1/2 text-dark-500 hover:text-dark-700"
+                          aria-label={showPassword ? "Hide password" : "Show password"}
                         >
                           {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                         </button>

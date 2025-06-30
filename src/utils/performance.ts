@@ -1,5 +1,3 @@
-import { debounce } from './helpers';
-
 // Performance monitoring utilities
 export interface PerformanceMetrics {
   pageLoadTime: number;
@@ -32,51 +30,57 @@ export const initPerformanceMonitoring = (): void => {
   window.performance.mark('app-start');
 
   // Listen for largest contentful paint
-  const lcpObserver = new PerformanceObserver((entryList) => {
-    const entries = entryList.getEntries();
-    const lastEntry = entries[entries.length - 1];
-    window.performance.measure('largest-contentful-paint', {
-      start: 'app-start',
-      end: lastEntry.startTime
-    });
-    console.log('Largest Contentful Paint:', lastEntry.startTime);
-  });
-
   try {
+    const lcpObserver = new PerformanceObserver((entryList) => {
+      const entries = entryList.getEntries();
+      if (entries.length > 0) {
+        const lastEntry = entries[entries.length - 1];
+        // Use proper options object for measure
+        window.performance.measure('largest-contentful-paint', {
+          start: 'app-start',
+          end: lastEntry.startTime
+        });
+        console.log('Largest Contentful Paint:', lastEntry.startTime);
+      }
+    });
+    
     lcpObserver.observe({ type: 'largest-contentful-paint', buffered: true });
   } catch (e) {
     console.warn('LCP observation not supported', e);
   }
 
   // Listen for first input delay
-  const fidObserver = new PerformanceObserver((entryList) => {
-    const entries = entryList.getEntries();
-    const firstInput = entries[0];
-    window.performance.measure('first-input-delay', {
-      start: 'app-start',
-      end: firstInput.startTime
-    });
-    console.log('First Input Delay:', firstInput.processingStart - firstInput.startTime);
-  });
-
   try {
+    const fidObserver = new PerformanceObserver((entryList) => {
+      const entries = entryList.getEntries();
+      if (entries.length > 0) {
+        const firstInput = entries[0];
+        // Use proper options object for measure
+        window.performance.measure('first-input-delay', {
+          start: firstInput.startTime,
+          end: firstInput.processingStart
+        });
+        console.log('First Input Delay:', firstInput.processingStart - firstInput.startTime);
+      }
+    });
+    
     fidObserver.observe({ type: 'first-input', buffered: true });
   } catch (e) {
     console.warn('FID observation not supported', e);
   }
 
   // Listen for layout shifts
-  const clsObserver = new PerformanceObserver((entryList) => {
-    let cumulativeLayoutShift = 0;
-    for (const entry of entryList.getEntries()) {
-      if (!entry.hadRecentInput) {
-        cumulativeLayoutShift += (entry as any).value;
-      }
-    }
-    console.log('Cumulative Layout Shift:', cumulativeLayoutShift);
-  });
-
   try {
+    const clsObserver = new PerformanceObserver((entryList) => {
+      let cumulativeLayoutShift = 0;
+      for (const entry of entryList.getEntries()) {
+        if (!entry.hadRecentInput) {
+          cumulativeLayoutShift += (entry as any).value;
+        }
+      }
+      console.log('Cumulative Layout Shift:', cumulativeLayoutShift);
+    });
+    
     clsObserver.observe({ type: 'layout-shift', buffered: true });
   } catch (e) {
     console.warn('CLS observation not supported', e);
@@ -87,8 +91,11 @@ export const initPerformanceMonitoring = (): void => {
     window.performance.mark('app-loaded');
     window.performance.measure('app-load-time', 'app-start', 'app-loaded');
     
-    const loadTime = window.performance.getEntriesByName('app-load-time')[0].duration;
-    console.log('App Load Time:', loadTime);
+    const loadTimeMeasures = window.performance.getEntriesByName('app-load-time');
+    if (loadTimeMeasures.length > 0) {
+      const loadTime = loadTimeMeasures[0].duration;
+      console.log('App Load Time:', loadTime);
+    }
   });
 };
 
@@ -101,33 +108,53 @@ export const getPerformanceMetrics = (): Partial<PerformanceMetrics> => {
   const metrics: Partial<PerformanceMetrics> = {};
   
   // Navigation timing
-  const navigationTiming = window.performance.timing;
-  if (navigationTiming) {
-    metrics.pageLoadTime = navigationTiming.loadEventEnd - navigationTiming.navigationStart;
+  const navigationEntries = window.performance.getEntriesByType('navigation');
+  if (navigationEntries.length > 0) {
+    const navTiming = navigationEntries[0] as PerformanceNavigationTiming;
+    metrics.pageLoadTime = navTiming.loadEventEnd - navTiming.startTime;
   }
   
   // Resource timing
   const resources = window.performance.getEntriesByType('resource');
   metrics.resourceCount = resources.length;
-  metrics.resourceSize = resources.reduce((total, resource) => total + (resource as any).transferSize || 0, 0);
+  metrics.resourceSize = resources.reduce((total, resource) => {
+    return total + ((resource as PerformanceResourceTiming).transferSize || 0);
+  }, 0);
   
   // Custom measures
-  const loadTimeMeasure = window.performance.getEntriesByName('app-load-time')[0];
-  if (loadTimeMeasure) {
-    metrics.pageLoadTime = loadTimeMeasure.duration;
+  const loadTimeMeasures = window.performance.getEntriesByName('app-load-time');
+  if (loadTimeMeasures.length > 0) {
+    metrics.pageLoadTime = loadTimeMeasures[0].duration;
   }
   
-  const lcpMeasure = window.performance.getEntriesByName('largest-contentful-paint')[0];
-  if (lcpMeasure) {
-    metrics.largestContentfulPaint = lcpMeasure.duration;
+  const lcpMeasures = window.performance.getEntriesByName('largest-contentful-paint');
+  if (lcpMeasures.length > 0) {
+    metrics.largestContentfulPaint = lcpMeasures[0].duration;
   }
   
-  const fidMeasure = window.performance.getEntriesByName('first-input-delay')[0];
-  if (fidMeasure) {
-    metrics.firstInputDelay = fidMeasure.duration;
+  const fidMeasures = window.performance.getEntriesByName('first-input-delay');
+  if (fidMeasures.length > 0) {
+    metrics.firstInputDelay = fidMeasures[0].duration;
   }
   
   return metrics;
+};
+
+// Report performance metrics
+export const reportPerformanceMetrics = (): void => {
+  const metrics = getPerformanceMetrics();
+  
+  // In a real app, you'd send this to your analytics service
+  console.log('Performance metrics:', metrics);
+  
+  // Example threshold checks
+  if (metrics.pageLoadTime && metrics.pageLoadTime > 3000) {
+    console.warn('Page load time exceeds threshold:', metrics.pageLoadTime);
+  }
+  
+  if (metrics.largestContentfulPaint && metrics.largestContentfulPaint > 2500) {
+    console.warn('LCP exceeds threshold:', metrics.largestContentfulPaint);
+  }
 };
 
 // Image optimization utilities
@@ -146,20 +173,6 @@ export const optimizeImage = (url: string, width: number, quality = 80): string 
   return url;
 };
 
-// Lazy loading utilities
-export const lazyLoadImage = (imageElement: HTMLImageElement, src: string): void => {
-  const observer = new IntersectionObserver((entries) => {
-    entries.forEach(entry => {
-      if (entry.isIntersecting) {
-        imageElement.src = src;
-        observer.unobserve(imageElement);
-      }
-    });
-  }, { rootMargin: '200px' });
-  
-  observer.observe(imageElement);
-};
-
 // Prefetch critical resources
 export const prefetchCriticalResources = (resources: string[]): void => {
   if (typeof document === 'undefined') return;
@@ -171,26 +184,3 @@ export const prefetchCriticalResources = (resources: string[]): void => {
     document.head.appendChild(link);
   });
 };
-
-// Debounced window resize handler
-export const handleResize = debounce(() => {
-  // Update responsive elements
-  console.log('Window resized:', window.innerWidth, window.innerHeight);
-}, 200);
-
-// Track and report performance metrics
-export const reportPerformanceMetrics = debounce(() => {
-  const metrics = getPerformanceMetrics();
-  
-  // In a real app, you'd send this to your analytics service
-  console.log('Performance metrics:', metrics);
-  
-  // Example threshold checks
-  if (metrics.pageLoadTime && metrics.pageLoadTime > 3000) {
-    console.warn('Page load time exceeds threshold:', metrics.pageLoadTime);
-  }
-  
-  if (metrics.largestContentfulPaint && metrics.largestContentfulPaint > 2500) {
-    console.warn('LCP exceeds threshold:', metrics.largestContentfulPaint);
-  }
-}, 5000);
