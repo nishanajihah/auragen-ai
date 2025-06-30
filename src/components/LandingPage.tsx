@@ -6,6 +6,7 @@ import {
   Shield, Clock, DollarSign, Flame, Diamond, Rocket,
   LogIn, UserPlus, Target, Lightbulb, Heart, Coffee
 } from 'lucide-react';
+import { analytics } from '../services/analytics';
 
 interface LandingPageProps {
   onGetStarted: () => void;
@@ -48,37 +49,6 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onSignIn
     }
   ];
 
-  // const testimonials = [
-  //   {
-  //     name: "Sarah Chen",
-  //     role: "UI/UX Designer",
-  //     avatar: "SC",
-  //     content: "AuraGen AI transformed my design workflow. What used to take hours now takes minutes!",
-  //     rating: 5
-  //   },
-  //   {
-  //     name: "Marcus Rodriguez",
-  //     role: "Frontend Developer",
-  //     avatar: "MR",
-  //     content: "The component suggestions are spot-on. It's like having a senior designer on my team.",
-  //     rating: 5
-  //   },
-  //   {
-  //     name: "Emily Watson",
-  //     role: "Product Manager",
-  //     avatar: "EW",
-  //     content: "Our team's design consistency improved dramatically since using AuraGen AI.",
-  //     rating: 5
-  //   }
-  // ];
-
-  // const stats = [
-  //   { number: "1,000+", label: "Design Systems Created", icon: TrendingUp },
-  //   { number: "50+", label: "Happy Designers", icon: Users },
-  //   { number: "99.9%", label: "Uptime", icon: Shield },
-  //   { number: "4.9/5", label: "User Rating", icon: Star }
-  // ];
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-dark-50 via-dark-100 to-dark-200 overflow-hidden">
       {/* Navigation */}
@@ -96,42 +66,37 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onSignIn
                 AuraGen AI
               </span>
             </div>
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-3">
               {onViewPricing && (
                 <button
-                  onClick={onViewPricing}
-                  className="group relative overflow-hidden bg-gradient-to-r from-purple-500 via-pink-500 to-red-500 hover:from-purple-600 hover:via-pink-600 hover:to-red-600 text-white px-6 py-3 rounded-2xl font-bold transition-all duration-300 transform hover:scale-110 shadow-xl hover:shadow-2xl"
+                  onClick={() => {
+                    onViewPricing();
+                    analytics.track('pricing_button_clicked', { location: 'landing_nav' });
+                  }}
+                  className="text-dark-700 hover:text-dark-900 px-3 py-1.5 rounded-lg font-medium transition-all border border-dark-300/30 hover:border-primary-500/50 text-xs"
                 >
-                  <div className="absolute inset-0 bg-gradient-to-r from-purple-600 via-pink-600 to-red-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                  <div className="relative flex items-center space-x-2">
-                    <Flame className="w-5 h-5 animate-pulse" />
-                    <span>Premium Plans</span>
-                    <Diamond className="w-4 h-4 group-hover:rotate-180 transition-transform duration-500" />
-                  </div>
+                  Pricing
                 </button>
               )}
               
-              {/* FIXED: Better designed Sign In button */}
               <button
-                onClick={onSignIn}
-                className="group relative overflow-hidden bg-dark-200/80 hover:bg-dark-300/80 text-dark-700 hover:text-dark-900 px-6 py-3 rounded-2xl font-bold transition-all duration-300 border-2 border-dark-300/50 hover:border-primary-500/50 shadow-lg hover:shadow-xl backdrop-blur-xl transform hover:scale-105"
+                onClick={() => {
+                  onSignIn();
+                  analytics.track('sign_in_button_clicked', { location: 'landing_nav' });
+                }}
+                className="text-dark-700 hover:text-dark-900 px-3 py-1.5 rounded-lg font-medium transition-all border border-dark-300/30 hover:border-primary-500/50 text-xs"
               >
-                <div className="absolute inset-0 bg-primary-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                <div className="relative flex items-center space-x-2">
-                  <LogIn className="w-5 h-5 group-hover:translate-x-1 transition-transform duration-300" />
-                  <span>Sign In</span>
-                </div>
+                Sign In
               </button>
               
               <button
-                onClick={onGetStarted}
-                className="group relative overflow-hidden bg-gradient-to-r from-primary-500 to-primary-600 hover:from-primary-600 hover:to-primary-700 text-white px-6 py-3 rounded-2xl font-bold transition-all duration-300 transform hover:scale-105 shadow-xl"
+                onClick={() => {
+                  onGetStarted();
+                  analytics.track('get_started_button_clicked', { location: 'landing_nav' });
+                }}
+                className="bg-gradient-to-r from-primary-500 to-primary-600 hover:from-primary-600 hover:to-primary-700 text-white px-3 py-1.5 rounded-lg font-medium transition-all shadow-lg hover:shadow-xl text-xs"
               >
-                <div className="absolute inset-0 bg-gradient-to-r from-primary-600 to-primary-700 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                <div className="relative flex items-center space-x-2">
-                  <UserPlus className="w-5 h-5" />
-                  <span>Get Started Free</span>
-                </div>
+                Get Started Free
               </button>
             </div>
           </div>
@@ -161,35 +126,38 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onSignIn
               From color palettes to complete component libraries - all powered by conversation.
             </p>
 
-            {/* FIXED: All buttons same height (py-5) */}
-            <div className="flex flex-col sm:flex-row items-center justify-center space-y-4 sm:space-y-0 sm:space-x-6 mb-16">
+            {/* CTA Buttons */}
+            <div className="flex flex-col sm:flex-row items-center justify-center space-y-4 sm:space-y-0 sm:space-x-4 mb-16">
               <button
-                onClick={onGetStarted}
-                className="group relative overflow-hidden bg-gradient-to-r from-primary-500 via-primary-600 to-primary-700 hover:from-primary-600 hover:via-primary-700 hover:to-primary-800 text-white px-10 py-5 rounded-2xl font-bold text-lg transition-all duration-300 transform hover:scale-105 shadow-2xl"
+                onClick={() => {
+                  onGetStarted();
+                  analytics.track('get_started_button_clicked', { location: 'hero' });
+                }}
+                className="group relative overflow-hidden bg-gradient-to-r from-primary-500 via-primary-600 to-primary-700 hover:from-primary-600 hover:via-primary-700 hover:to-primary-800 text-white px-8 py-4 rounded-xl font-bold text-base transition-all duration-300 transform hover:scale-105 shadow-2xl w-full sm:w-auto"
               >
                 <div className="absolute inset-0 bg-gradient-to-r from-primary-600 via-primary-700 to-primary-800 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                <div className="relative flex items-center space-x-3">
-                  <Wand2 className="w-6 h-6" />
+                <div className="relative flex items-center justify-center space-x-2">
+                  <Wand2 className="w-5 h-5" />
                   <span>Start Creating for Free</span>
-                  <ArrowRight className="w-6 h-6 group-hover:translate-x-1 transition-transform duration-300" />
                 </div>
               </button>
 
               {onViewPricing && (
                 <button
-                  onClick={onViewPricing}
-                  className="group relative overflow-hidden bg-gradient-to-r from-purple-500 via-pink-500 to-red-500 hover:from-purple-600 hover:via-pink-600 hover:to-red-600 text-white px-10 py-5 rounded-2xl font-bold text-lg transition-all duration-300 transform hover:scale-105 shadow-2xl"
+                  onClick={() => {
+                    onViewPricing();
+                    analytics.track('pricing_button_clicked', { location: 'hero' });
+                  }}
+                  className="group relative overflow-hidden bg-dark-200/80 hover:bg-dark-300/80 text-dark-700 hover:text-dark-900 px-8 py-4 rounded-xl font-bold text-base transition-all duration-300 border-2 border-dark-300/50 hover:border-primary-500/50 shadow-lg hover:shadow-xl backdrop-blur-xl w-full sm:w-auto"
                 >
-                  <div className="absolute inset-0 bg-gradient-to-r from-purple-600 via-pink-600 to-red-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                  <div className="relative flex items-center space-x-3">
-                    <Flame className="w-6 h-6 animate-pulse" />
-                    <span>Unlock Premium Power</span>
-                    <Diamond className="w-6 h-6 group-hover:rotate-180 transition-transform duration-500" />
+                  <div className="absolute inset-0 bg-primary-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                  <div className="relative flex items-center justify-center space-x-2">
+                    <Crown className="w-5 h-5" />
+                    <span>View Pricing</span>
                   </div>
                 </button>
               )}
             </div>
-
           </div>
         </div>
 
@@ -293,7 +261,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onSignIn
         </div>
       </section>
 
-      {/* REDESIGNED CTA Section - More Catchy and Better Sized */}
+      {/* CTA Section */}
       <section className="py-24">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="relative overflow-hidden bg-gradient-to-br from-primary-500/15 via-purple-500/10 to-pink-500/15 backdrop-blur-2xl rounded-4xl border-2 border-primary-500/30 shadow-3xl">
@@ -307,7 +275,6 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onSignIn
                 <Rocket className="w-10 h-10 text-white" />
               </div>
               
-              {/* FIXED: More catchy headline */}
               <h2 className="text-4xl md:text-5xl font-black text-dark-900 mb-6 leading-tight">
                 <span className="bg-gradient-to-r from-primary-400 via-purple-500 to-pink-600 bg-clip-text text-transparent">
                   Unleash Your Creative Genius
@@ -322,48 +289,51 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onSignIn
                 with the power of AI. Your next masterpiece is just one conversation away! ✨
               </p>
               
-              {/* FIXED: Better sized buttons with consistent height (py-5) */}
-              <div className="flex flex-col sm:flex-row items-center justify-center space-y-4 sm:space-y-0 sm:space-x-6 mb-8">
+              <div className="flex flex-col sm:flex-row items-center justify-center space-y-4 sm:space-y-0 sm:space-x-4 mb-8">
                 <button
-                  onClick={onGetStarted}
-                  className="group relative overflow-hidden bg-gradient-to-r from-primary-500 via-primary-600 to-primary-700 hover:from-primary-600 hover:via-primary-700 hover:to-primary-800 text-white px-10 py-5 rounded-2xl font-black text-xl transition-all duration-300 transform hover:scale-110 shadow-2xl hover:shadow-3xl"
+                  onClick={() => {
+                    onGetStarted();
+                    analytics.track('get_started_button_clicked', { location: 'cta' });
+                  }}
+                  className="group relative overflow-hidden bg-gradient-to-r from-primary-500 via-primary-600 to-primary-700 hover:from-primary-600 hover:via-primary-700 hover:to-primary-800 text-white px-8 py-4 rounded-xl font-bold text-base transition-all duration-300 transform hover:scale-105 shadow-2xl hover:shadow-3xl w-full sm:w-auto"
                 >
                   <div className="absolute inset-0 bg-gradient-to-r from-primary-600 via-primary-700 to-primary-800 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                  <div className="relative flex items-center space-x-3">
-                    <Crown className="w-6 h-6" />
-                    <span>Start Your Free Journey</span>
-                    <ArrowRight className="w-6 h-6 group-hover:translate-x-2 transition-transform duration-300" />
+                  <div className="relative flex items-center justify-center space-x-2">
+                    <Crown className="w-5 h-5" />
+                    <span>Start Your Free Trial</span>
                   </div>
                 </button>
                 
                 {onViewPricing && (
                   <button
-                    onClick={onViewPricing}
-                    className="group relative overflow-hidden bg-gradient-to-r from-purple-500 via-pink-500 to-red-500 hover:from-purple-600 hover:via-pink-600 hover:to-red-600 text-white px-10 py-5 rounded-2xl font-black text-xl transition-all duration-300 transform hover:scale-110 shadow-2xl"
+                    onClick={() => {
+                      onViewPricing();
+                      analytics.track('pricing_button_clicked', { location: 'cta' });
+                    }}
+                    className="group relative overflow-hidden bg-dark-200/80 hover:bg-dark-300/80 text-dark-700 hover:text-dark-900 px-8 py-4 rounded-xl font-bold text-base transition-all duration-300 border-2 border-dark-300/50 hover:border-primary-500/50 shadow-lg hover:shadow-xl backdrop-blur-xl w-full sm:w-auto"
                   >
-                    <div className="absolute inset-0 bg-gradient-to-r from-purple-600 via-pink-600 to-red-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                    <div className="relative flex items-center space-x-3">
-                      <Flame className="w-6 h-6 animate-pulse" />
-                      <span>Discover Premium Magic</span>
-                      <Rocket className="w-6 h-6 group-hover:translate-y-1 transition-transform duration-300" />
+                    <div className="absolute inset-0 bg-primary-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                    <div className="relative flex items-center justify-center space-x-2">
+                      <Flame className="w-5 h-5" />
+                      <span>View Pricing</span>
                     </div>
                   </button>
                 )}
               </div>
               
               {/* Trust indicators */}
-              <div className="flex items-center justify-center space-x-8 text-dark-500">
+              <div className="flex flex-wrap items-center justify-center gap-4 text-dark-500">
                 <div className="flex items-center space-x-2">
-                  <Shield className="w-5 h-5 text-green-500" />
-                  <span className="font-semibold">No Credit Card Required</span>
+                  <Shield className="w-4 h-4 text-green-500" />
+                  <span className="text-sm font-semibold">No Credit Card Required</span>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <Heart className="w-5 h-5 text-red-500" />
-                  <span className="font-semibold">30-Day Money Back</span>
+                  <Heart className="w-4 h-4 text-red-500" />
+                  <span className="text-sm font-semibold">30-Day Money Back</span>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <Coffee className="w-5 h-5 text-primary-500" />
-                  <span className="font-semibold">Setup in 2 Minutes</span>
+                  <Coffee className="w-4 h-4 text-primary-500" />
+                  <span className="text-sm font-semibold">Setup in 2 Minutes</span>
                 </div>
               </div>
             </div>

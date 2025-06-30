@@ -66,7 +66,7 @@ export const Header: React.FC<HeaderProps> = ({
             <div className="relative">
               <div className="absolute inset-0 bg-gradient-to-r from-primary-400 to-primary-600 rounded-lg blur-lg opacity-75 animate-pulse"></div>
               <div className="relative p-1.5 sm:p-2 rounded-lg bg-gradient-to-br from-primary-500 via-primary-600 to-primary-700 shadow-xl">
-                <Sparkles className="w-4 sm:w-6 h-4 sm:h-6 text-dark-50 animate-pulse" />
+                <Sparkles className="w-4 sm:w-5 h-4 sm:h-5 text-dark-50 animate-pulse" />
               </div>
             </div>
             <h1 className="text-base sm:text-xl font-bold bg-gradient-to-r from-primary-400 via-primary-500 to-primary-600 bg-clip-text text-transparent">
@@ -320,13 +320,13 @@ export const Header: React.FC<HeaderProps> = ({
                 )}
               </div>
             ) : (
-              <div className="flex items-center space-x-1 sm:space-x-2">
+              <div className="flex items-center space-x-2">
                 <button
                   onClick={() => {
                     onAuthClick?.('signin');
                     analytics.track('sign_in_button_clicked', { location: 'header' });
                   }}
-                  className="bg-dark-200/50 hover:bg-dark-300/50 text-dark-700 px-2 sm:px-4 py-1.5 sm:py-2 rounded-lg font-medium transition-all border border-dark-300/30 hover:border-primary-500/50 text-xs sm:text-sm"
+                  className="bg-dark-200/50 hover:bg-dark-300/50 text-dark-700 px-3 py-1.5 rounded-lg font-medium transition-all border border-dark-300/30 hover:border-primary-500/50 text-xs"
                 >
                   Sign In
                 </button>
@@ -335,7 +335,7 @@ export const Header: React.FC<HeaderProps> = ({
                     onAuthClick?.('signup');
                     analytics.track('sign_up_button_clicked', { location: 'header' });
                   }}
-                  className="bg-gradient-to-r from-primary-500 to-primary-600 hover:from-primary-600 hover:to-primary-700 text-white px-2 sm:px-4 py-1.5 sm:py-2 rounded-lg font-medium transition-all shadow-lg hover:shadow-xl text-xs sm:text-sm"
+                  className="bg-gradient-to-r from-primary-500 to-primary-600 hover:from-primary-600 hover:to-primary-700 text-white px-3 py-1.5 rounded-lg font-medium transition-all shadow-lg hover:shadow-xl text-xs"
                 >
                   Sign Up
                 </button>

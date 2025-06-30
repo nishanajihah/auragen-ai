@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Shield, X, AlertTriangle, Lock, RefreshCw } from 'lucide-react';
 import { isAccountLocked, unlockAccount } from '../services/supabase';
+import { analytics } from '../services/analytics';
 
 interface SecurityBannerProps {
   user?: any;
@@ -25,19 +26,23 @@ export const SecurityBanner: React.FC<SecurityBannerProps> = ({
       setMessage('Your account has been locked due to too many failed login attempts. Please reset your password or contact support.');
       setBannerType('error');
       setVisible(true);
+      analytics.track('security_banner_shown', { type: 'account_locked' });
     } else if (accountStatus === 'suspended') {
       setMessage('Your account has been suspended. Please contact support for assistance.');
       setBannerType('error');
       setVisible(true);
+      analytics.track('security_banner_shown', { type: 'account_suspended' });
     } else if (accountStatus === 'pending') {
       setMessage('Please verify your email address to activate your account.');
       setBannerType('warning');
       setVisible(true);
+      analytics.track('security_banner_shown', { type: 'email_verification_needed' });
     }
   }, [user, accountStatus]);
 
   const handleClose = () => {
     setVisible(false);
+    analytics.track('security_banner_dismissed', { type: bannerType });
     if (onClose) onClose();
   };
 
@@ -45,10 +50,14 @@ export const SecurityBanner: React.FC<SecurityBannerProps> = ({
     if (!user) return;
     
     setIsUnlocking(true);
+    analytics.track('account_unlock_attempted');
+    
     try {
       await unlockAccount(user.id);
       setMessage('Your account has been unlocked. Please try logging in again.');
       setBannerType('info');
+      analytics.track('account_unlock_succeeded');
+      
       setTimeout(() => {
         setVisible(false);
         if (onClose) onClose();
@@ -56,6 +65,7 @@ export const SecurityBanner: React.FC<SecurityBannerProps> = ({
     } catch (error) {
       console.error('Error unlocking account:', error);
       setMessage('Failed to unlock your account. Please contact support.');
+      analytics.track('account_unlock_failed', { error: String(error) });
     } finally {
       setIsUnlocking(false);
     }
@@ -72,11 +82,11 @@ export const SecurityBanner: React.FC<SecurityBannerProps> = ({
       <div className="max-w-7xl mx-auto flex items-center justify-between">
         <div className="flex items-center space-x-3">
           {bannerType === 'error' ? (
-            <AlertTriangle className="w-5 h-5 text-red-500" />
+            <AlertTriangle className="w-5 h-5 text-red-500 flex-shrink-0" />
           ) : bannerType === 'warning' ? (
-            <AlertTriangle className="w-5 h-5 text-yellow-500" />
+            <AlertTriangle className="w-5 h-5 text-yellow-500 flex-shrink-0" />
           ) : (
-            <Shield className="w-5 h-5 text-blue-500" />
+            <Shield className="w-5 h-5 text-blue-500 flex-shrink-0" />
           )}
           
           <p className={`text-sm ${
@@ -112,6 +122,7 @@ export const SecurityBanner: React.FC<SecurityBannerProps> = ({
           <button
             onClick={handleClose}
             className="p-1 rounded-lg hover:bg-black/10 transition-colors"
+            aria-label="Close"
           >
             <X className="w-4 h-4 text-dark-500" />
           </button>
