@@ -70,6 +70,36 @@ export const signUp = async (email: string, password: string, metadata?: any) =>
       throw error;
     }
 
+    // Create corresponding entry in public.users table if user was created successfully
+    if (data.user && data.user.id) {
+      try {
+        const { error: userInsertError } = await supabase!
+          .from('users')
+          .insert({
+            id: data.user.id,
+            email: data.user.email,
+            plan_id: email === DEVELOPER_EMAIL ? 'developer' : 'explorer',
+            generation_limit: email === DEVELOPER_EMAIL ? -1 : 90,
+            current_generation_count: 0,
+            subscription_status: email === DEVELOPER_EMAIL ? 'developer' : 'free',
+            account_status: 'active',
+            failed_login_attempts: 0,
+            mfa_enabled: false,
+            password_history: [],
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          });
+
+        if (userInsertError) {
+          console.error('Error creating user profile:', userInsertError);
+          // Don't throw here as the auth user was created successfully
+          // The user can still use the app, just some features might not work
+        }
+      } catch (profileError) {
+        console.error('Error creating user profile:', profileError);
+      }
+    }
+
     // If email verification is enabled, inform the user
     if (data.user && !data.user.confirmed_at) {
       return { 
@@ -308,7 +338,7 @@ const trackFailedLoginAttempt = async (email: string) => {
       console.error('Error updating failed login attempts:', updateError);
     }
     
-    // Log the failed attempt
+    // Log the failed attempt (silently fail if audit logging doesn't work)
     await logAuthEvent(user.id, 'failed_login', { 
       attempts: newAttempts,
       account_locked: newAttempts >= 5
@@ -337,7 +367,7 @@ const updateLoginStats = async (userId: string) => {
       console.error('Error updating login stats:', error);
     }
     
-    // Log the successful login
+    // Log the successful login (silently fail if audit logging doesn't work)
     await logAuthEvent(userId, 'successful_login');
     
   } catch (error) {
@@ -345,7 +375,7 @@ const updateLoginStats = async (userId: string) => {
   }
 };
 
-// Log authentication events
+// Log authentication events - made more resilient to RLS policy issues
 export const logAuthEvent = async (userId: string, eventType: string, details: any = {}) => {
   if (!isSupabaseConfigured()) return;
 
@@ -361,10 +391,13 @@ export const logAuthEvent = async (userId: string, eventType: string, details: a
       });
       
     if (error) {
-      console.error('Error logging auth event:', error);
+      // Don't throw error for audit logging failures - just log them
+      // This prevents audit logging issues from breaking the main authentication flow
+      console.warn('Audit logging failed (this is non-critical):', error.message);
     }
   } catch (error) {
-    console.error('Error logging auth event:', error);
+    // Silently handle audit logging errors to prevent breaking auth flow
+    console.warn('Audit logging failed (this is non-critical):', error);
   }
 };
 
@@ -474,14 +507,13 @@ export const isAccountLocked = async (email: string): Promise<boolean> => {
     const { data: users, error } = await supabase!
       .from('users')
       .select('account_status')
-      .eq('email', email)
-      .single();
+      .eq('email', email);
       
-    if (error || !users) {
+    if (error || !users || users.length === 0) {
       return false;
     }
     
-    return users.account_status === 'locked';
+    return users[0].account_status === 'locked';
   } catch (error) {
     console.error('Error checking account status:', error);
     return false;
