@@ -37,6 +37,15 @@
   
   /* Better input sizing */
   input, textarea, select { @apply text-sm sm:text-base; }
+
+  /* Font display optimization */
+  @font-face {
+    font-family: 'Inter';
+    font-style: normal;
+    font-weight: 400;
+    font-display: swap;
+    src: url(https://fonts.gstatic.com/s/inter/v12/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuLyfAZ9hiA.woff2) format('woff2');
+  }
 }
 
 @layer components {
@@ -79,6 +88,7 @@
   .glass-morphism {
     @apply backdrop-blur-2xl bg-dark-100/95 border-2 border-dark-200/30;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    will-change: transform, opacity;
   }
   
   .glass-morphism.light {
@@ -89,10 +99,12 @@
   .glass-morphism-dark {
     @apply backdrop-blur-2xl bg-dark-50/95 border-2 border-dark-200/40;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    will-change: transform, opacity;
   }
   
   .welcome-gradient {
     @apply bg-gradient-to-br from-dark-50 via-dark-100 to-dark-200;
+    will-change: background-color;
   }
   
   .welcome-gradient.light {
@@ -102,6 +114,7 @@
   /* Enhanced input fields with better mobile support */
   .input-field {
     @apply bg-dark-100/80 border-2 border-dark-300/50 rounded-xl px-3 py-2 sm:px-4 sm:py-3 text-dark-900 placeholder-dark-500 outline-none transition-all duration-300 backdrop-blur-xl text-sm;
+    will-change: border-color, box-shadow;
   }
   
   .input-field.light {
@@ -120,10 +133,12 @@
   .btn-primary {
     @apply bg-gradient-to-r from-primary-500 via-primary-600 to-primary-700 hover:from-primary-600 hover:via-primary-700 hover:to-primary-800 text-dark-50 px-4 py-2 sm:px-6 sm:py-3 rounded-xl font-semibold transition-all duration-300 transform hover:scale-105 active:scale-95 shadow-lg hover:shadow-xl text-sm;
     box-shadow: 0 10px 25px rgba(234, 179, 8, 0.4), 0 4px 12px rgba(234, 179, 8, 0.3);
+    will-change: transform, box-shadow;
   }
   
   .btn-secondary {
     @apply bg-dark-200/90 hover:bg-dark-300/90 text-dark-900 px-3 py-2 sm:px-4 sm:py-2 rounded-lg font-semibold transition-all duration-300 border-2 border-dark-300/50 hover:border-dark-400/50 shadow-lg hover:shadow-xl backdrop-blur-xl text-sm;
+    will-change: transform, background-color;
   }
   
   .btn-secondary.light {
@@ -134,6 +149,7 @@
   .card {
     @apply bg-dark-100/95 backdrop-blur-xl rounded-xl sm:rounded-2xl p-3 sm:p-4 lg:p-6 border-2 border-dark-200/30 transition-all duration-500 shadow-lg hover:shadow-xl;
     box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    will-change: transform, box-shadow;
   }
   
   .card.light {
@@ -144,10 +160,12 @@
   /* Enhanced modal styles */
   .modal-overlay {
     @apply fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-2 sm:p-4;
+    will-change: opacity;
   }
   
   .modal-content {
-    @apply bg-dark-100/95 backdrop-blur-2xl rounded-xl sm:rounded-2xl p-3 sm:p-4 lg:p-6 border-2 border-dark-200/40 shadow-2xl max-w-full sm:max-w-2xl w-full max-h-[95vh] overflow-y-auto;
+    @apply bg-dark-100/95 backdrop-blur-2xl rounded-xl sm:rounded-2xl p-3 sm:p-4 lg:p-6 border-2 border-dark-200/40 shadow-2xl max-w-full sm:max-w-2xl w-full max-h-[90vh] overflow-y-auto;
+    will-change: transform, opacity;
   }
   
   .modal-content.light {
@@ -267,6 +285,27 @@
 
   .text-contrast-low.light {
     @apply text-slate-500;
+  }
+
+  /* Performance optimizations */
+  .content-visibility-auto {
+    content-visibility: auto;
+  }
+
+  .will-change-transform {
+    will-change: transform;
+  }
+
+  .will-change-opacity {
+    will-change: opacity;
+  }
+
+  .backface-visibility-hidden {
+    backface-visibility: hidden;
+  }
+
+  .transform-gpu {
+    transform: translateZ(0);
   }
 }
 
@@ -440,4 +479,28 @@
   background: rgba(255, 255, 255, 0.95);
   border-color: rgba(226, 232, 240, 0.5);
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+
+/* Performance optimizations */
+img, video {
+  content-visibility: auto;
+}
+
+/* Preload critical fonts */
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url(https://fonts.gstatic.com/s/inter/v12/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuLyfAZ9hiA.woff2) format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url(https://fonts.gstatic.com/s/inter/v12/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuFuYAZ9hiA.woff2) format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }

@@ -16,6 +16,7 @@ interface LayoutProps {
   onOpenProjectManager?: () => void;
   voiceControls?: React.ReactNode;
   showHeader?: boolean;
+  onShowUsageDashboard?: () => void;
 }
 
 export const Layout: React.FC<LayoutProps> = ({
@@ -31,7 +32,8 @@ export const Layout: React.FC<LayoutProps> = ({
   onOpenSettings,
   onOpenProjectManager,
   voiceControls,
-  showHeader = true
+  showHeader = true,
+  onShowUsageDashboard
 }) => {
   return (
     <div className={`min-h-screen welcome-gradient ${!darkMode ? 'light' : ''} transition-all duration-700`}>
@@ -48,6 +50,7 @@ export const Layout: React.FC<LayoutProps> = ({
           onOpenProjectManager={onOpenProjectManager}
           isPremium={isPremium}
           voiceControls={voiceControls}
+          onShowUsageDashboard={onShowUsageDashboard}
         />
       )}
       

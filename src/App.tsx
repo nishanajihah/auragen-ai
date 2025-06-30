@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, lazy, Suspense } from 'react';
 import { Layout } from './components/Layout';
 import { ConversationView } from './components/ConversationView';
 import { MoodboardView } from './components/MoodboardView';
@@ -27,6 +27,10 @@ import { notifications } from './services/notifications';
 import { getUserPlanLimits, checkUsageLimit, getGeminiModel, canUseVoice } from './utils/planRestrictions';
 import { VOICE_SETTINGS } from './utils/constants';
 import { getEnvironmentInfo } from './services/gemini';
+import { initPerformanceMonitoring, reportPerformanceMetrics } from './utils/performance';
+
+// Lazy load non-critical components
+const EnhancedPremiumModal = lazy(() => import('./components/EnhancedPremiumModal').then(module => ({ default: module.EnhancedPremiumModal })));
 
 type ViewMode = 'conversation' | 'moodboard';
 type AppMode = 'landing' | 'pricing' | 'app' | 'settings' | 'usage' | 'error';
@@ -52,6 +56,7 @@ function AppContent() {
   const [showFontModal, setShowFontModal] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [showExportModal, setShowExportModal] = useState(false);
+  const [showPremiumModal, setShowPremiumModal] = useState(false);
   
   // Modal data
   const [authMode, setAuthMode] = useState<'signin' | 'signup'>('signin');
@@ -59,6 +64,8 @@ function AppContent() {
     currentFont: string;
     fontType: 'heading' | 'body';
   } | null>(null);
+  const [premiumFeature, setPremiumFeature] = useState<string | undefined>(undefined);
+  const [premiumLimit, setPremiumLimit] = useState<number | undefined>(undefined);
 
   // Voice settings
   const [voiceEnabled, setVoiceEnabled] = useState(true);
@@ -84,6 +91,18 @@ function AppContent() {
       size: 'medium'
     }
   });
+
+  // Initialize performance monitoring
+  useEffect(() => {
+    initPerformanceMonitoring();
+    
+    // Report metrics after the app has loaded
+    const timer = setTimeout(() => {
+      reportPerformanceMetrics();
+    }, 5000);
+    
+    return () => clearTimeout(timer);
+  }, []);
 
   // Theme persistence
   useEffect(() => {
@@ -140,6 +159,19 @@ function AppContent() {
       }
     }
   }, [user, appMode, initializeRevenueCat]);
+
+  // Handle premium modal events
+  useEffect(() => {
+    const handleShowPremiumModal = () => {
+      setShowPremiumModal(true);
+    };
+    
+    window.addEventListener('show-premium-modal', handleShowPremiumModal);
+    
+    return () => {
+      window.removeEventListener('show-premium-modal', handleShowPremiumModal);
+    };
+  }, []);
 
   const toggleDarkMode = () => {
     setDarkMode(!darkMode);
@@ -199,11 +231,9 @@ function AppContent() {
     const usageCheck = checkUsageLimit('generations', mockUsageData.generations, user);
     
     if (!usageCheck.allowed) {
-      notifications.warning(
-        'Usage Limit Reached', 
-        `You've reached your daily limit of ${usageCheck.limit} generations. Upgrade to Premium for unlimited access.`
-      );
-      setAppMode('pricing');
+      setPremiumFeature('generation');
+      setPremiumLimit(usageCheck.limit);
+      setShowPremiumModal(true);
       return;
     }
 
@@ -288,11 +318,9 @@ function AppContent() {
     const usageCheck = checkUsageLimit('generations', mockUsageData.generations, user);
     
     if (!usageCheck.allowed) {
-      notifications.warning(
-        'Usage Limit Reached', 
-        `You've reached your daily limit of ${usageCheck.limit} generations. Upgrade to Premium for unlimited access.`
-      );
-      setAppMode('pricing');
+      setPremiumFeature('generation');
+      setPremiumLimit(usageCheck.limit);
+      setShowPremiumModal(true);
       return;
     }
 
@@ -337,11 +365,9 @@ function AppContent() {
     const usageCheck = checkUsageLimit('projects', mockUsageData.projects, user);
     
     if (!usageCheck.allowed) {
-      notifications.warning(
-        'Project Limit Reached', 
-        `You've reached your limit of ${usageCheck.limit} saved projects. Upgrade to Premium for unlimited projects.`
-      );
-      setAppMode('pricing');
+      setPremiumFeature('project');
+      setPremiumLimit(usageCheck.limit);
+      setShowPremiumModal(true);
       return;
     }
 
@@ -448,11 +474,9 @@ function AppContent() {
     const usageCheck = checkUsageLimit('exports', mockUsageData.exports, user);
     
     if (!usageCheck.allowed) {
-      notifications.warning(
-        'Export Limit Reached', 
-        `You've reached your daily limit of ${usageCheck.limit} exports. Upgrade to Premium for unlimited exports.`
-      );
-      setAppMode('pricing');
+      setPremiumFeature('export');
+      setPremiumLimit(usageCheck.limit);
+      setShowPremiumModal(true);
       return;
     }
 
@@ -478,6 +502,7 @@ function AppContent() {
   const handlePremiumSuccess = () => {
     analytics.trackPremiumUpgrade('monthly');
     notifications.success('Premium Activated!', 'You now have unlimited access to all features.');
+    setShowPremiumModal(false);
   };
 
   const handleOpenSettings = () => {
@@ -585,6 +610,7 @@ function AppContent() {
         user={user}
         isPremium={isPremium}
         showHeader={false}
+        onShowUsageDashboard={handleOpenUsageDashboard}
       >
         <SettingsPage
           user={user}
@@ -611,6 +637,7 @@ function AppContent() {
           setAuthMode(mode);
           setShowAuthModal(true);
         }}
+        onShowUsageDashboard={handleOpenUsageDashboard}
       >
         <div className="py-8">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -802,6 +829,19 @@ function AppContent() {
           fontType={fontModalData.fontType}
         />
       )}
+
+      {/* Premium Modal - Lazy loaded */}
+      <Suspense fallback={null}>
+        {showPremiumModal && (
+          <EnhancedPremiumModal
+            isOpen={showPremiumModal}
+            onClose={() => setShowPremiumModal(false)}
+            onSuccess={handlePremiumSuccess}
+            feature={premiumFeature}
+            limit={premiumLimit}
+          />
+        )}
+      </Suspense>
     </Layout>
   );
 }
@@ -817,3 +857,23 @@ function App() {
 }
 
 export default App;
+
+// Add missing ArrowLeft component
+const ArrowLeft = (props: any) => {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      {...props}
+    >
+      <path d="M19 12H5M12 19l-7-7 7-7" />
+    </svg>
+  );
+};

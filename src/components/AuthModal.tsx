@@ -213,9 +213,9 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="bg-dark-100/95 backdrop-blur-2xl rounded-3xl border-2 border-dark-200/40 shadow-2xl max-w-md w-full">
+      <div className="bg-dark-100/95 backdrop-blur-2xl rounded-3xl border-2 border-dark-200/40 shadow-2xl max-w-md w-full max-h-[90vh] overflow-y-auto">
         {/* Header */}
-        <div className="p-6 border-b border-dark-200/30">
+        <div className="p-6 border-b border-dark-200/30 sticky top-0 z-10 bg-dark-100/95 backdrop-blur-2xl">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
               <div className="p-3 rounded-2xl bg-gradient-to-br from-primary-500 to-primary-600 shadow-lg">
@@ -244,7 +244,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
         </div>
 
         {/* Form */}
-        <div className="p-6">
+        <div className="p-6 pb-8">
           {mode === 'signup' && step === 'credentials' && (
             <div className="mb-6 p-4 rounded-2xl bg-gradient-to-r from-primary-500/10 to-primary-600/10 border border-primary-500/30">
               <div className="flex items-center space-x-2 mb-2">
