@@ -17,6 +17,7 @@ import { MobileNavigation } from './components/MobileNavigation';
 import { GoogleFontsProvider } from './components/GoogleFontsProvider';
 import { RevenueCatProvider, useRevenueCat } from './components/RevenueCatProvider';
 import { UsageDashboard } from './components/UsageDashboard';
+import { SecurityBanner } from './components/SecurityBanner';
 import { Message, MoodboardData, ProjectData, FontSelectionRequest } from './types';
 import { generateAuraResponse, handleRegenerateSection, resetConversation } from './services/mockApi';
 import { speakAuraResponse } from './services/elevenlabs';
@@ -31,7 +32,7 @@ type ViewMode = 'conversation' | 'moodboard';
 type AppMode = 'landing' | 'pricing' | 'app' | 'settings' | 'usage' | 'error';
 
 function AppContent() {
-  const { user, loading: authLoading } = useAuth();
+  const { user, loading: authLoading, accountStatus, isAccountLocked } = useAuth();
   const { isPremium, initializeRevenueCat } = useRevenueCat();
   const [appMode, setAppMode] = useState<AppMode>('landing');
   const [errorType, setErrorType] = useState<'404' | '500' | '403' | 'maintenance'>('404');
@@ -612,7 +613,7 @@ function AppContent() {
         }}
       >
         <div className="py-8">
-          <ResponsiveContainer>
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex items-center space-x-3 mb-6">
               <button
                 onClick={() => setAppMode('app')}
@@ -627,7 +628,7 @@ function AppContent() {
               user={user} 
               onUpgradeClick={() => setAppMode('pricing')} 
             />
-          </ResponsiveContainer>
+          </div>
         </div>
       </Layout>
     );
@@ -682,6 +683,12 @@ function AppContent() {
         />
       }
     >
+      {/* Security Banner */}
+      <SecurityBanner 
+        user={user} 
+        accountStatus={accountStatus}
+      />
+      
       <div className="py-4 sm:py-6">
         {/* Project Indicator - Mobile Responsive */}
         {moodboard && (

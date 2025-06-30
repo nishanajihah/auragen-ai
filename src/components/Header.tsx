@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { Moon, Sun, Sparkles, MessageCircle, Palette, User, LogOut, Settings, Crown, BarChart3, FolderOpen, ChevronDown, Zap, Download } from 'lucide-react';
+import { Moon, Sun, Sparkles, MessageCircle, Palette, User, LogOut, Settings, Crown, BarChart3, FolderOpen, ChevronDown, Zap, Download, Shield, Lock } from 'lucide-react';
 import { signOut, isDeveloper, getUserTier } from '../services/supabase';
 import { getUserPlanLimits, checkUsageLimit, getPlanDisplayName } from '../utils/planRestrictions';
+import { analytics } from '../services/analytics';
 
 interface HeaderProps {
   darkMode: boolean;
@@ -35,8 +36,10 @@ export const Header: React.FC<HeaderProps> = ({
   const [showProfileMenu, setShowProfileMenu] = useState(false);
 
   const handleSignOut = async () => {
+    analytics.track('user_sign_out_initiated');
     await signOut();
     setShowProfileMenu(false);
+    analytics.track('user_signed_out_success');
   };
 
   // Get user plan info
@@ -128,7 +131,10 @@ export const Header: React.FC<HeaderProps> = ({
             {user ? (
               <div className="relative">
                 <button
-                  onClick={() => setShowProfileMenu(!showProfileMenu)}
+                  onClick={() => {
+                    setShowProfileMenu(!showProfileMenu);
+                    analytics.track('profile_menu_toggled', { state: !showProfileMenu ? 'opened' : 'closed' });
+                  }}
                   className="flex items-center space-x-1 sm:space-x-2 bg-dark-200/50 rounded-lg px-2 sm:px-3 py-1.5 sm:py-2 border border-primary-500/20 hover:border-primary-500/40 transition-all duration-300 group"
                 >
                   <div className="flex items-center space-x-1 sm:space-x-2">
@@ -187,6 +193,7 @@ export const Header: React.FC<HeaderProps> = ({
                               onClick={() => {
                                 onShowUsageDashboard();
                                 setShowProfileMenu(false);
+                                analytics.track('usage_dashboard_opened_from_profile');
                               }}
                               className="text-xs text-primary-600 hover:text-primary-700 font-medium"
                             >
@@ -231,6 +238,7 @@ export const Header: React.FC<HeaderProps> = ({
                               setShowProfileMenu(false);
                               // Navigate to pricing page instead of showing modal
                               window.location.href = '/pricing';
+                              analytics.track('upgrade_button_clicked', { location: 'profile_menu' });
                             }}
                             className="w-full mt-2 bg-gradient-to-r from-primary-500 to-primary-600 hover:from-primary-600 hover:to-primary-700 text-white py-1.5 sm:py-2 rounded-lg font-semibold transition-all duration-300 transform hover:scale-105 shadow-lg text-xs"
                           >
@@ -246,6 +254,7 @@ export const Header: React.FC<HeaderProps> = ({
                         onClick={() => {
                           onOpenProjectManager?.();
                           setShowProfileMenu(false);
+                          analytics.track('project_manager_opened_from_profile');
                         }}
                         className="w-full flex items-center space-x-2 sm:space-x-3 px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg hover:bg-dark-200/50 transition-colors text-left"
                       >
@@ -258,6 +267,7 @@ export const Header: React.FC<HeaderProps> = ({
                           onClick={() => {
                             onShowUsageDashboard();
                             setShowProfileMenu(false);
+                            analytics.track('usage_dashboard_opened_from_profile');
                           }}
                           className="w-full flex items-center space-x-2 sm:space-x-3 px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg hover:bg-dark-200/50 transition-colors text-left"
                         >
@@ -270,11 +280,30 @@ export const Header: React.FC<HeaderProps> = ({
                         onClick={() => {
                           onOpenSettings?.();
                           setShowProfileMenu(false);
+                          analytics.track('settings_opened_from_profile');
                         }}
                         className="w-full flex items-center space-x-2 sm:space-x-3 px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg hover:bg-dark-200/50 transition-colors text-left"
                       >
                         <Settings className="w-3 sm:w-4 h-3 sm:h-4 text-dark-600" />
                         <span className="text-xs sm:text-sm text-dark-700">Settings</span>
+                      </button>
+
+                      {/* Security Settings */}
+                      <button
+                        onClick={() => {
+                          onOpenSettings?.(); // We'll navigate to settings with security tab active
+                          setShowProfileMenu(false);
+                          analytics.track('security_settings_opened_from_profile');
+                        }}
+                        className="w-full flex items-center space-x-2 sm:space-x-3 px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg hover:bg-dark-200/50 transition-colors text-left"
+                      >
+                        <Shield className="w-3 sm:w-4 h-3 sm:h-4 text-dark-600" />
+                        <span className="text-xs sm:text-sm text-dark-700">Security</span>
+                        {user.mfa_enabled && (
+                          <span className="ml-auto text-xs bg-green-500/20 text-green-600 px-1.5 py-0.5 rounded-full">
+                            MFA On
+                          </span>
+                        )}
                       </button>
 
                       <div className="border-t border-dark-300/30 pt-1 mt-1">
@@ -293,13 +322,19 @@ export const Header: React.FC<HeaderProps> = ({
             ) : (
               <div className="flex items-center space-x-1 sm:space-x-2">
                 <button
-                  onClick={() => onAuthClick?.('signin')}
+                  onClick={() => {
+                    onAuthClick?.('signin');
+                    analytics.track('sign_in_button_clicked', { location: 'header' });
+                  }}
                   className="bg-dark-200/50 hover:bg-dark-300/50 text-dark-700 px-2 sm:px-4 py-1.5 sm:py-2 rounded-lg font-medium transition-all border border-dark-300/30 hover:border-primary-500/50 text-xs sm:text-sm"
                 >
                   Sign In
                 </button>
                 <button
-                  onClick={() => onAuthClick?.('signup')}
+                  onClick={() => {
+                    onAuthClick?.('signup');
+                    analytics.track('sign_up_button_clicked', { location: 'header' });
+                  }}
                   className="bg-gradient-to-r from-primary-500 to-primary-600 hover:from-primary-600 hover:to-primary-700 text-white px-2 sm:px-4 py-1.5 sm:py-2 rounded-lg font-medium transition-all shadow-lg hover:shadow-xl text-xs sm:text-sm"
                 >
                   Sign Up
